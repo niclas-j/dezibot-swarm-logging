@@ -5,6 +5,8 @@
 Dezibot dezibot = Dezibot();
 
 void receivedCallback(String &msg) {
+  dezibot.display.print("\n"+msg);
+  //delay(100);
   if (msg == "vorn") {
     dezibot.motion.move();
   } else if (msg == "links") {
@@ -23,10 +25,10 @@ void setup() {
 }
 
 void loop() {
-  dezibot.display.print("Hello from\nEmpfaengerbot!");
+/*   dezibot.display.print("Hello from\nEmpfaengerbot!");
   delay(2000);
-  dezibot.display.clear();
-  dezibot.display.print("Ready to receive instructions!");
-  delay(5000);
+  dezibot.display.clear(); */
+  dezibot.display.print("Received text from Sender!");
+  delay(2000);
   dezibot.display.clear();
 }
