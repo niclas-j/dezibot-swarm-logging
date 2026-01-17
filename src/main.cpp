@@ -1,25 +1,33 @@
 #include <Arduino.h>
 #include <Dezibot.h>
+#include <WiFi.h>
 #include <logger/Logger.h>
 
 Dezibot dezibot;
 
 int i = 0;
 
-void setup() {
+void setup()
+{
     dezibot.begin();
     dezibot.debugServer.setup();
 }
 
-void loop() {
+void loop()
+{
     // dezibot.colorDetection.getAmbientLight();
     dezibot.colorDetection.getColorValue(VEML_RED);
     dezibot.display.println(i);
+    Serial.println(i);
+    Serial.print("WiFi status: ");
+    Serial.println(WiFi.status() == WL_CONNECTED ? "Connected" : "Disconnected");
+    Serial.print("IP: ");
+    Serial.println(WiFi.localIP());
     i++;
     Logger::getInstance().logDebug("Hello World");
     Logger::getInstance().logError("Hello World");
     Logger::getInstance().logWarning("Hello World");
-    delay(30000);
+    delay(1000);
 
     // dezibot.motion.move();
     // delay(2500);
@@ -31,4 +39,3 @@ void loop() {
     // delay(1000);
     // dezibot.display.clear();
 }
-

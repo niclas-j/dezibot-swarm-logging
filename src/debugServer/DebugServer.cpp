@@ -14,6 +14,7 @@
 
 #include "PageProvider.h"
 #include "MainPage.h"
+#include "WifiCredentials.h"
 #include <WebServer.h>
 #include <WiFi.h>
 #include <SPIFFS.h>
@@ -29,22 +30,30 @@ DebugServer::DebugServer():server(80) {
 }
 
 void DebugServer::setup() {
-    // set wi-fi credentials
-    const char* SSID = "Debug-Server";
-    const char* PSK = "PW4studProj";
-
-    // set IP configuration
-    const IPAddress local_ip(192,168,1,1);
-    const IPAddress gateway(192,168,1,1);
-    const IPAddress subnet(255,255,255,0);
-
     // initialize SPIFFS for file access
     // changes in html files require "pio run -t uploadfs" or "Upload Filesystem Image" in plugin to take effect
     SPIFFS.begin();
 
-    // setup as wi-fi access point
-    WiFi.softAP(SSID, PSK);
-    WiFi.softAPConfig(local_ip, gateway, subnet);
+    // connect to existing WiFi network (Station mode)
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    
+    Serial.print("Connecting to WiFi");
+    const unsigned long timeout = 20000;
+    const unsigned long startAttempt = millis();
+    
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < timeout) {
+        delay(500);
+        Serial.print(".");
+    }
+    
+    if (WiFi.status() == WL_CONNECTED) {
+        Serial.println("\nWiFi connected!");
+        Serial.print("IP address: ");
+        Serial.println(WiFi.localIP());
+    } else {
+        Serial.println("\nWiFi connection failed! Debug server will not be available.");
+        return;
+    }
 
     // set uri and handler for each page
     // Main Page

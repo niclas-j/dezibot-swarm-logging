@@ -43,3 +43,6 @@
 #PlatformIO
 .pio/*
 .pio
+
+#WiFi credentials
+src/debugServer/WifiCredentials.h
