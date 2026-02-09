@@ -70,6 +70,7 @@ export default function SwarmPage() {
                 <TableHead>Messages</TableHead>
                 <TableHead>Uptime</TableHead>
                 <TableHead>Last Seen</TableHead>
+                <TableHead>Power</TableHead>
                 <TableHead class="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -108,6 +109,13 @@ export default function SwarmPage() {
                     <TableCell>{device.counter}</TableCell>
                     <TableCell>{formatUptime(device.uptime)}</TableCell>
                     <TableCell>{formatLastSeen(device.lastSeen)}</TableCell>
+                    <TableCell class="font-mono text-xs">
+                      {device.online
+                        ? device.powerMw >= 1000
+                          ? `${(device.powerMw / 1000).toFixed(2)} W`
+                          : `${device.powerMw} mW`
+                        : "—"}
+                    </TableCell>
                     <TableCell>
                       <Show when={device.online}>
                         <Button

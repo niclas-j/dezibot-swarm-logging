@@ -72,6 +72,7 @@ void LiveDataPage::getRemoteSensorValues(const String &mac)
             addSensorJson(sensorArray, "minFreeHeap", String(m.minFreeHeap));
             addSensorJson(sensorArray, "taskCount", String(m.taskCount));
             addSensorJson(sensorArray, "chipTemp", String(m.chipTemp));
+            addSensorJson(sensorArray, "estimatedPower (mW)", String(m.estimatedPowerMw));
         }
         xSemaphoreGive(mutex);
     }

@@ -37,6 +37,7 @@ void SwarmPage::getSwarmData()
             obj["uptime"] = entry.second.msg.uptimeMs;
             obj["lastSeen"] = now - entry.second.lastSeenMs;
             obj["online"] = (now - entry.second.lastSeenMs) < 5000;
+            obj["powerMw"] = entry.second.msg.estimatedPowerMw;
         }
         xSemaphoreGive(mutex);
     }

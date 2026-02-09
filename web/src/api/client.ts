@@ -4,6 +4,7 @@ export interface SwarmDevice {
   uptime: number;
   lastSeen: number;
   online: boolean;
+  powerMw: number;
 }
 
 export interface SensorValue {

@@ -44,6 +44,8 @@ typedef struct {
     uint32_t minFreeHeap;
     uint8_t  taskCount;
     float    chipTemp;
+    // Power estimate
+    uint16_t estimatedPowerMw;
 } __attribute__((packed)) SensorMessage;
 
 #endif
