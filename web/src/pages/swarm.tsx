@@ -1,8 +1,9 @@
 import { useNavigate } from "@solidjs/router";
 import { useQuery } from "@tanstack/solid-query";
 import { For, Show } from "solid-js";
-import { fetchSwarmData } from "@/api/client";
+import { fetchSwarmData, locateDevice } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -69,6 +70,7 @@ export default function SwarmPage() {
                 <TableHead>Messages</TableHead>
                 <TableHead>Uptime</TableHead>
                 <TableHead>Last Seen</TableHead>
+                <TableHead class="w-[100px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -106,6 +108,20 @@ export default function SwarmPage() {
                     <TableCell>{device.counter}</TableCell>
                     <TableCell>{formatUptime(device.uptime)}</TableCell>
                     <TableCell>{formatLastSeen(device.lastSeen)}</TableCell>
+                    <TableCell>
+                      <Show when={device.online}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e: MouseEvent) => {
+                            e.stopPropagation();
+                            locateDevice(device.mac);
+                          }}
+                        >
+                          Locate
+                        </Button>
+                      </Show>
+                    </TableCell>
                   </TableRow>
                 )}
               </For>

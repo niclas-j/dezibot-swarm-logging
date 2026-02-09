@@ -62,6 +62,15 @@ export async function fetchSensorSettings(): Promise<SensorGroup[]> {
   return res.json();
 }
 
+export async function locateDevice(mac: string): Promise<void> {
+  const res = await fetch("/command/locate", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `mac=${encodeURIComponent(mac)}`,
+  });
+  if (!res.ok) throw new Error("Failed to send locate command");
+}
+
 export async function toggleSensorFunction(
   sensorFunction: string,
   enabled: boolean,

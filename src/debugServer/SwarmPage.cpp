@@ -2,11 +2,15 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include <shared/SenderMap.h>
+#include <shared/CommandSender.h>
+#include <shared/CommandMessage.h>
 
 SwarmPage::SwarmPage(WebServer *server) : serverPointer(server)
 {
     server->on("/getSwarmData", [this]()
                { getSwarmData(); });
+    server->on("/command/locate", HTTP_POST, [this]()
+               { locateDevice(); });
 }
 
 void SwarmPage::handler()
@@ -40,4 +44,29 @@ void SwarmPage::getSwarmData()
     String response;
     serializeJson(jsonDoc, response);
     serverPointer->send(200, "application/json", response);
+}
+
+void SwarmPage::locateDevice()
+{
+    String mac = serverPointer->arg("mac");
+    if (mac.length() == 0)
+    {
+        serverPointer->send(400, "application/json", "{\"error\":\"missing mac parameter\"}");
+        return;
+    }
+
+    uint8_t macBytes[6];
+    if (sscanf(mac.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
+               &macBytes[0], &macBytes[1], &macBytes[2],
+               &macBytes[3], &macBytes[4], &macBytes[5]) != 6)
+    {
+        serverPointer->send(400, "application/json", "{\"error\":\"invalid mac format\"}");
+        return;
+    }
+
+    bool ok = sendCommandToDevice(macBytes, CMD_LOCATE);
+    if (ok)
+        serverPointer->send(200, "application/json", "{\"status\":\"sent\"}");
+    else
+        serverPointer->send(500, "application/json", "{\"error\":\"send failed\"}");
 }

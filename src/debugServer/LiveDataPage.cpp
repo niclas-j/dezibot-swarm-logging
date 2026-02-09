@@ -67,6 +67,11 @@ void LiveDataPage::getRemoteSensorValues(const String &mac)
             addSensorJson(sensorArray, "getTilt()",
                           "x: " + String(m.tiltX) + ", y: " + String(m.tiltY));
             addSensorJson(sensorArray, "getTiltDirection()", String(m.tiltDirection));
+
+            addSensorJson(sensorArray, "freeHeap", String(m.freeHeap));
+            addSensorJson(sensorArray, "minFreeHeap", String(m.minFreeHeap));
+            addSensorJson(sensorArray, "taskCount", String(m.taskCount));
+            addSensorJson(sensorArray, "chipTemp", String(m.chipTemp));
         }
         xSemaphoreGive(mutex);
     }

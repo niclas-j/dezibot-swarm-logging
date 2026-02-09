@@ -3,7 +3,10 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
+#include <esp_system.h>
+#include <driver/temp_sensor.h>
 #include <shared/SensorMessage.h>
+#include <shared/CommandMessage.h>
 
 #define ESPNOW_CHANNEL 1
 
@@ -15,6 +18,29 @@ static uint32_t counter = 0;
 void onSent(const uint8_t *macAddr, esp_now_send_status_t status) {
     Serial.print("Send status: ");
     Serial.println(status == ESP_NOW_SEND_SUCCESS ? "OK" : "FAIL");
+}
+
+void onCommand(const uint8_t *mac, const uint8_t *data, int dataLen)
+{
+    if (dataLen != sizeof(CommandMessage))
+        return;
+
+    CommandMessage cmd;
+    memcpy(&cmd, data, sizeof(cmd));
+
+    if (cmd.magic != CMD_MAGIC)
+        return;
+
+    switch (cmd.command)
+    {
+    case CMD_LOCATE:
+        Serial.println("LOCATE command received, blinking LEDs");
+        dezibot.multiColorLight.blink(5, 0x00006400, ALL, 500);
+        break;
+    default:
+        Serial.printf("Unknown command: 0x%02X\n", cmd.command);
+        break;
+    }
 }
 
 void setup() {
@@ -30,6 +56,7 @@ void setup() {
     }
 
     esp_now_register_send_cb(onSent);
+    esp_now_register_recv_cb(onCommand);
 
     esp_now_peer_info_t peerInfo = {};
     memcpy(peerInfo.peer_addr, broadcastAddress, 6);
@@ -40,6 +67,10 @@ void setup() {
         Serial.println("Failed to add broadcast peer");
         return;
     }
+
+    temp_sensor_config_t tempCfg = TSENS_CONFIG_DEFAULT();
+    temp_sensor_set_config(tempCfg);
+    temp_sensor_start();
 
     Serial.println("ESP-NOW sender ready");
     Serial.print("MAC: ");
@@ -89,6 +120,13 @@ void loop() {
     msg.tiltX = tilt.xRotation;
     msg.tiltY = tilt.yRotation;
     msg.tiltDirection = (uint8_t)Motion::detection.getTiltDirection();
+
+    msg.freeHeap = esp_get_free_heap_size();
+    msg.minFreeHeap = esp_get_minimum_free_heap_size();
+    msg.taskCount = (uint8_t)uxTaskGetNumberOfTasks();
+    float chipTemp = 0.0f;
+    temp_sensor_read_celsius(&chipTemp);
+    msg.chipTemp = chipTemp;
 
     esp_err_t result = esp_now_send(broadcastAddress, (uint8_t *)&msg, sizeof(msg));
 

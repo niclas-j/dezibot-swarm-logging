@@ -39,6 +39,11 @@ typedef struct {
     int32_t  tiltX;
     int32_t  tiltY;
     uint8_t  tiltDirection;
+    // System
+    uint32_t freeHeap;
+    uint32_t minFreeHeap;
+    uint8_t  taskCount;
+    float    chipTemp;
 } __attribute__((packed)) SensorMessage;
 
 #endif
