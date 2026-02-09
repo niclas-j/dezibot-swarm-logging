@@ -34,26 +34,12 @@ void DebugServer::setup() {
     // changes in html files require "pio run -t uploadfs" or "Upload Filesystem Image" in plugin to take effect
     SPIFFS.begin();
 
-    // connect to existing WiFi network (Station mode)
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    
-    Serial.print("Connecting to WiFi");
-    const unsigned long timeout = 20000;
-    const unsigned long startAttempt = millis();
-    
-    while (WiFi.status() != WL_CONNECTED && millis() - startAttempt < timeout) {
-        delay(500);
-        Serial.print(".");
-    }
-    
-    if (WiFi.status() == WL_CONNECTED) {
-        Serial.println("\nWiFi connected!");
-        Serial.print("IP address: ");
-        Serial.println(WiFi.localIP());
-    } else {
-        Serial.println("\nWiFi connection failed! Debug server will not be available.");
-        return;
-    }
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.softAP(WIFI_SSID, WIFI_PASSWORD, 1);
+    Serial.print("Debug server AP started. Connect to '");
+    Serial.print(WIFI_SSID);
+    Serial.print("' at http://");
+    Serial.println(WiFi.softAPIP());
 
     // set uri and handler for each page
     // Main Page
