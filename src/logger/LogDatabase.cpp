@@ -14,6 +14,16 @@ LogDatabase& LogDatabase::getInstance() {
 void LogDatabase::addLog(const LogEntry::Entry& entry) {
     std::lock_guard<std::mutex> lock(mutex_);
     logEntries_.emplace_back(entry);
+
+    if (logEntries_.size() > MAX_LOG_ENTRIES) {
+        size_t excess = logEntries_.size() - MAX_LOG_ENTRIES;
+        logEntries_.erase(logEntries_.begin(),
+                          logEntries_.begin() + static_cast<std::ptrdiff_t>(excess));
+        if (lastSentIndex_ > excess)
+            lastSentIndex_ -= excess;
+        else
+            lastSentIndex_ = 0;
+    }
 }
 
 // Retrieve all log entries

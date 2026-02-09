@@ -1,59 +1,116 @@
-/**
- * @file LiveDataPage.cpp
- * @author Tim Dietrich, Felix Herrling
- * @brief Implementation of the LiveDataPage class.
- * @version 1.0
- * @date 2025-03-23
- *
- * @copyright Copyright (c) 2025
- *
- */
-
 #include "LiveDataPage.h"
 #include <Dezibot.h>
 #include <ArduinoJson.h>
 #include <logger/Logger.h>
+#include <shared/SenderMap.h>
 
 extern Dezibot dezibot;
 
-LiveDataPage::LiveDataPage(WebServer* server): serverPointer(server)
+LiveDataPage::LiveDataPage(WebServer *server) : serverPointer(server)
 {
-    server->on("/getEnabledSensorValues", [this]() {
-        getEnabledSensorValues();
-    });
+    server->on("/getEnabledSensorValues", [this]()
+               { getEnabledSensorValues(); });
 }
 
-// send the html content of the LiveDataPage
-void LiveDataPage::handler() {
+void LiveDataPage::handler()
+{
     serveFileFromSpiffs(serverPointer, "/liveDataPage.html", "text/html");
-};
+}
 
-void LiveDataPage::canvasjsHandler() {
+void LiveDataPage::canvasjsHandler()
+{
     serveFileFromSpiffs(serverPointer, "/lib/canvasjs.min.js", "text/javascript");
 }
 
-void LiveDataPage::jsHandler() {
+void LiveDataPage::jsHandler()
+{
     serveFileFromSpiffs(serverPointer, "/js/liveDataPageScript.js", "text/javascript");
 }
 
-void LiveDataPage::cssHandler() {
+void LiveDataPage::cssHandler()
+{
     serveFileFromSpiffs(serverPointer, "/css/liveDataPageStyle.css", "text/css");
 }
 
-// read values from enabled sensors and send them as json
-void LiveDataPage::getEnabledSensorValues() {
+static void addSensorJson(JsonArray &arr, const char *name, const String &value)
+{
+    JsonObject obj = arr.add<JsonObject>();
+    obj["name"] = name;
+    obj["value"] = value;
+}
+
+void LiveDataPage::getRemoteSensorValues(const String &mac)
+{
     JsonDocument jsonDoc;
     JsonArray sensorArray = jsonDoc.to<JsonArray>();
 
-    // disable logging to prevent unwanted entries
+    auto &senderMap = getSenderMap();
+    SemaphoreHandle_t mutex = getSenderMapMutex();
+
+    if (xSemaphoreTake(mutex, pdMS_TO_TICKS(50)) == pdTRUE)
+    {
+        auto it = senderMap.find(mac);
+        if (it != senderMap.end())
+        {
+            const SensorMessage &m = it->second.msg;
+
+            addSensorJson(sensorArray, "getAmbientLight()",
+                          String(m.ambientLight));
+            addSensorJson(sensorArray, "getRGB()",
+                          "blue: " + String(m.colorB) + ", red: " + String(m.colorR) + ", green: " + String(m.colorG));
+            addSensorJson(sensorArray, "getColorValue(RED)", String(m.colorR));
+            addSensorJson(sensorArray, "getColorValue(GREEN)", String(m.colorG));
+            addSensorJson(sensorArray, "getColorValue(BLUE)", String(m.colorB));
+            addSensorJson(sensorArray, "getColorValue(WHITE)", String(m.colorW));
+
+            addSensorJson(sensorArray, "getValue(IR_FRONT)", String(m.irFront));
+            addSensorJson(sensorArray, "getValue(IR_LEFT)", String(m.irLeft));
+            addSensorJson(sensorArray, "getValue(IR_RIGHT)", String(m.irRight));
+            addSensorJson(sensorArray, "getValue(IR_BACK)", String(m.irBack));
+            addSensorJson(sensorArray, "getValue(DL_BOTTOM)", String(m.dlBottom));
+            addSensorJson(sensorArray, "getValue(DL_FRONT)", String(m.dlFront));
+
+            addSensorJson(sensorArray, "left.getSpeed()", String(m.motorLeft));
+            addSensorJson(sensorArray, "right.getSpeed()", String(m.motorRight));
+
+            addSensorJson(sensorArray, "getAcceleration()",
+                          "x: " + String(m.accelX) + ", y: " + String(m.accelY) + ", z: " + String(m.accelZ));
+            addSensorJson(sensorArray, "getRotation()",
+                          "x: " + String(m.gyroX) + ", y: " + String(m.gyroY) + ", z: " + String(m.gyroZ));
+            addSensorJson(sensorArray, "getTemperature()", String(m.temperature));
+            addSensorJson(sensorArray, "getWhoAmI()", String(m.whoAmI));
+            addSensorJson(sensorArray, "getTilt()",
+                          "x: " + String(m.tiltX) + ", y: " + String(m.tiltY));
+            addSensorJson(sensorArray, "getTiltDirection()", String(m.tiltDirection));
+        }
+        xSemaphoreGive(mutex);
+    }
+
+    String jsonResponse;
+    serializeJson(jsonDoc, jsonResponse);
+    serverPointer->send(200, "application/json", jsonResponse);
+}
+
+void LiveDataPage::getEnabledSensorValues()
+{
+    if (serverPointer->hasArg("mac"))
+    {
+        getRemoteSensorValues(serverPointer->arg("mac"));
+        return;
+    }
+
+    JsonDocument jsonDoc;
+    JsonArray sensorArray = jsonDoc.to<JsonArray>();
+
     Logger::getInstance().setLoggingEnabled(false);
 
-    // iterate over all sensors and sensorfunctions and add the values to the json
-    auto& sensors = dezibot.debugServer.getSensors();
-    for (auto& sensor : sensors) {
-        for (auto& sensorFunction : sensor.getSensorFunctions()) {
-            if (sensorFunction.getSensorState()) {
-                // read and add value if sensorfunction is enabled
+    auto &sensors = dezibot.debugServer.getSensors();
+    for (auto &sensor : sensors)
+    {
+        for (auto &sensorFunction : sensor.getSensorFunctions())
+        {
+            if (sensorFunction.getSensorState())
+            {
                 JsonObject sensorJson = sensorArray.add<JsonObject>();
                 sensorJson["name"] = sensorFunction.getFunctionName();
                 sensorJson["value"] = sensorFunction.getStringValue();
@@ -61,10 +118,8 @@ void LiveDataPage::getEnabledSensorValues() {
         }
     }
 
-    // enable logging again
     Logger::getInstance().setLoggingEnabled(true);
 
-    // send json response
     String jsonResponse;
     serializeJson(jsonDoc, jsonResponse);
     serverPointer->send(200, "application/json", jsonResponse);

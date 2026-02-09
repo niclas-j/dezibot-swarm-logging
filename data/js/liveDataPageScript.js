@@ -1,10 +1,25 @@
+const params = new URLSearchParams(window.location.search);
+const remoteMac = params.get("mac");
+const fetchUrl = remoteMac
+    ? "/getEnabledSensorValues?mac=" + encodeURIComponent(remoteMac)
+    : "/getEnabledSensorValues";
+
+if (remoteMac) {
+    const banner = document.getElementById("remote-banner");
+    if (banner) {
+        banner.textContent = "Remote device: " + remoteMac;
+        banner.style.display = "block";
+    }
+    const title = document.querySelector("h1");
+    if (title) title.textContent = "Live Data - " + remoteMac;
+}
+
 // Slider handling to adjust chartLimit
 const sliderInput = document.getElementById('slider-input');
 const numberInput = document.getElementById('slider-value');
 
 function updateChartLimit(value) {
     chartLimit = parseInt(value, 10);
-    // should be kept in bounds, else typing "50" resets the chart to 5
     if (chartLimit < 50 && chartLimit > 2000) {
         return;
     }
@@ -25,7 +40,7 @@ let xVal = 0;
 // Data fetching and DOM update
 async function fetchSensorData() {
     try {
-        const response = await fetch('/getEnabledSensorValues');
+        const response = await fetch(fetchUrl);
         if (!response.ok) throw new Error('Failed to fetch data');
         const sensors = await response.json();
         const container = document.getElementById('sensor-container');
@@ -147,5 +162,5 @@ function handleIncomingData(chartId, value) {
 }
 
 // Start periodic updates
-setInterval(fetchSensorData, 100);
+setInterval(fetchSensorData, remoteMac ? 1000 : 100);
 fetchSensorData();

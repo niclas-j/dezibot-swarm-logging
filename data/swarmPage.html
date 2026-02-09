@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/swarmPageStyle.css">
+    <title>Swarm Devices</title>
+  </head>
+  <body>
+    <div class="header-bar">
+      <button onclick="window.location.href='/'">Home</button>
+      <button onclick="window.location.href='/settings'">Go to Settings</button>
+      <button onclick="window.location.href='/livedata'">View Live Data</button>
+      <button onclick="window.location.href='/logging'">View Logs</button>
+    </div>
+    <h1 style="text-align:center;">Swarm Devices</h1>
+    <div id="device-count" class="device-count">Devices: 0</div>
+    <div class="table-container">
+      <table id="swarm-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>MAC Address</th>
+            <th>Messages</th>
+            <th>Uptime</th>
+            <th>Last Seen</th>
+          </tr>
+        </thead>
+        <tbody id="swarm-body"></tbody>
+      </table>
+    </div>
+    <script src="/js/swarmPageScript.js"></script>
+  </body>
+</html>

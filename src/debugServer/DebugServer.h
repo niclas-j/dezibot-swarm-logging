@@ -15,6 +15,7 @@
 #include "LoggingPage.h"
 #include "LiveDataPage.h"
 #include "SettingsPage.h"
+#include "SwarmPage.h"
 #include "Sensor.h"
 
 class DebugServer {
@@ -24,6 +25,7 @@ private:
     LoggingPage* loggingPage;
     LiveDataPage* liveDataPage;
     SettingsPage* settingsPage;
+    SwarmPage* swarmPage;
     bool serverActive = true;
 
     /**

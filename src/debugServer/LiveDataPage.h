@@ -39,6 +39,7 @@ public:
      * @return void
      */
     void getEnabledSensorValues();
+    void getRemoteSensorValues(const String &mac);
 };
 
 #endif //LIVEDATAPAGE_H

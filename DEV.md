@@ -9,6 +9,9 @@ pio device monitor -e esp32s3_receiver --port /dev/cu.usbmodem2101
 pio device monitor -e esp32s3_sender --port /dev/cu.usbmodem101
 pio device monitor -e esp32_sender
 
+SPIFFS (filesystem upload):
+pio run -t uploadfs -e esp32s3_receiver
+
 Port mapping:
 - /dev/cu.usbmodem2101 = receiver
 - /dev/cu.usbmodem101 = sender

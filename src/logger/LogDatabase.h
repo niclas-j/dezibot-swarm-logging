@@ -64,6 +64,7 @@ private:
     LogDatabase(const LogDatabase&) = delete;
     LogDatabase& operator=(const LogDatabase&) = delete;
 
+    static constexpr size_t MAX_LOG_ENTRIES = 500;
     std::vector<LogEntry::Entry> logEntries_; ///< Vector storing all log entries
     std::mutex mutex_; ///< Mutex for thread-safe operations
     size_t lastSentIndex_; ///< Index tracking the last sent log entry
