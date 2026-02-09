@@ -13,8 +13,6 @@ private:
 public:
     explicit SwarmPage(WebServer* server);
     void handler() override;
-    void cssHandler();
-    void jsHandler();
     void getSwarmData();
 };
 

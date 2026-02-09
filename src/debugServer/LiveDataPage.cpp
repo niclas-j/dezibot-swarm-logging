@@ -14,22 +14,7 @@ LiveDataPage::LiveDataPage(WebServer *server) : serverPointer(server)
 
 void LiveDataPage::handler()
 {
-    serveFileFromSpiffs(serverPointer, "/liveDataPage.html", "text/html");
-}
-
-void LiveDataPage::canvasjsHandler()
-{
-    serveFileFromSpiffs(serverPointer, "/lib/canvasjs.min.js", "text/javascript");
-}
-
-void LiveDataPage::jsHandler()
-{
-    serveFileFromSpiffs(serverPointer, "/js/liveDataPageScript.js", "text/javascript");
-}
-
-void LiveDataPage::cssHandler()
-{
-    serveFileFromSpiffs(serverPointer, "/css/liveDataPageStyle.css", "text/css");
+    serveFileFromSpiffs(serverPointer, "/index.html", "text/html");
 }
 
 static void addSensorJson(JsonArray &arr, const char *name, const String &value)

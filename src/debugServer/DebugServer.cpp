@@ -32,22 +32,14 @@ DebugServer::DebugServer() : server(80)
 
 void DebugServer::setup()
 {
-    // initialize SPIFFS for file access
-    // changes in html files require "pio run -t uploadfs" or "Upload Filesystem Image" in plugin to take effect
     SPIFFS.begin();
 
-    // set wi-fi credentials
     const char *SSID = "Debug-Server";
     const char *PSK = "PW4studProj";
 
-    // set IP configuration
     const IPAddress local_ip(192, 168, 1, 1);
     const IPAddress gateway(192, 168, 1, 1);
     const IPAddress subnet(255, 255, 255, 0);
-
-    // initialize SPIFFS for file access
-    // changes in html files require "pio run -t uploadfs" or "Upload Filesystem Image" in plugin to take effect
-    SPIFFS.begin();
 
     // setup as wi-fi access point
     WiFi.softAP(SSID, PSK);
@@ -56,59 +48,25 @@ void DebugServer::setup()
     Serial.print("Debug server AP started. Connect to '");
     Serial.println(WiFi.softAPIP());
 
-    // set uri and handler for each page
-    // Main Page
     server.on("/", [this]
               { mainPage->handler(); });
 
-    server.on("/css/mainPageStyle.css", [this]
-              { mainPage->cssHandler(); });
-
-    // Logging
-    server.on("/logging", [this]
-              { loggingPage->handler(); });
-
-    server.on("/css/loggingPageStyle.css", [this]
-              { loggingPage->cssHandler(); });
-
-    server.on("/js/loggingPageScript.js", [this]
-              { loggingPage->jsHandler(); });
-
-    // Live Data
-    server.on("/livedata", [this]
-              { liveDataPage->handler(); });
-
-    server.on("/lib/canvasjs.min.js", [this]
-              { liveDataPage->canvasjsHandler(); });
-
-    server.on("/js/liveDataPageScript.js", [this]
-              { liveDataPage->jsHandler(); });
-
-    server.on("/css/liveDataPageStyle.css", [this]
-              { liveDataPage->cssHandler(); });
-
-    // Settings
-    server.on("/settings", [this]
-              { settingsPage->handler(); });
-
-    server.on("/js/settingsPageScript.js", [this]
-              { settingsPage->jsHandler(); });
-
-    server.on("/css/settingsPageStyle.css", [this]
-              { settingsPage->cssHandler(); });
-
-    // Swarm
-    server.on("/swarm", [this]
-              { swarmPage->handler(); });
-
-    server.on("/js/swarmPageScript.js", [this]
-              { swarmPage->jsHandler(); });
-
-    server.on("/css/swarmPageStyle.css", [this]
-              { swarmPage->cssHandler(); });
-
     server.onNotFound([this]
-                      { mainPage->errorPageHandler(); });
+                      {
+        String uri = server.uri();
+        if (uri.startsWith("/assets/"))
+        {
+            String contentType = "application/octet-stream";
+            if (uri.endsWith(".js"))
+                contentType = "application/javascript";
+            else if (uri.endsWith(".css"))
+                contentType = "text/css";
+            PageProvider::serveFileFromSpiffs(&server, uri.c_str(), contentType.c_str());
+        }
+        else
+        {
+            mainPage->handler();
+        } });
 
     // initialize color sensor
     Sensor colorSensor("Color Sensor", "ColorDetection");

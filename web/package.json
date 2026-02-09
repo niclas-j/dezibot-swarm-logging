@@ -1,0 +1,28 @@
+{
+  "name": "dezibot-debug-ui",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@kobalte/core": "^0.13.7",
+    "@solidjs/router": "^0.15.3",
+    "@tanstack/solid-query": "^5.62.16",
+    "chart.js": "^4.4.7",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cva": "^1.0.0-beta.4",
+    "solid-js": "^1.9.4",
+    "tailwind-merge": "^2.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.0",
+    "vite-plugin-solid": "^2.11.0"
+  }
+}

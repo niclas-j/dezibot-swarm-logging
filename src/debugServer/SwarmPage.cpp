@@ -11,17 +11,7 @@ SwarmPage::SwarmPage(WebServer *server) : serverPointer(server)
 
 void SwarmPage::handler()
 {
-    serveFileFromSpiffs(serverPointer, "/swarmPage.html", "text/html");
-}
-
-void SwarmPage::cssHandler()
-{
-    serveFileFromSpiffs(serverPointer, "/css/swarmPageStyle.css", "text/css");
-}
-
-void SwarmPage::jsHandler()
-{
-    serveFileFromSpiffs(serverPointer, "/js/swarmPageScript.js", "text/javascript");
+    serveFileFromSpiffs(serverPointer, "/index.html", "text/html");
 }
 
 void SwarmPage::getSwarmData()

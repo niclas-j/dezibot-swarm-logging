@@ -20,15 +20,7 @@ private:
     WebServer* serverPointer;
 public:
     explicit MainPage(WebServer* server);
-
-    /**
-     * @brief provides html on initial request from client
-     * @return void
-     */
     void handler() override;
-    void cssHandler();
-
-    void errorPageHandler();
 };
 
 #endif //MAINPAGE_H
