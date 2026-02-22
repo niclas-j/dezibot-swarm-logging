@@ -1,18 +1,18 @@
 #include <Arduino.h>
 #include <Dezibot.h>
-#include <WiFi.h>
-#include <esp_now.h>
-#include <esp_wifi.h>
 #include <esp_system.h>
 #include <driver/temp_sensor.h>
 #include <shared/SensorMessage.h>
 #include <shared/CommandMessage.h>
+#include <transport/SenderTransport.h>
+#include <transport/EspNowSenderTransport.h>
+#include <transport/BleSenderTransport.h>
 
-#define ESPNOW_CHANNEL 1
+#define TRANSPORT_PROTOCOL "bluetooth" // "esp_now" or "bluetooth"
 
 Dezibot dezibot;
 
-static uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+static SenderTransport *transport = nullptr;
 static uint32_t counter = 0;
 
 static uint16_t estimatePowerMw(const SensorMessage &m)
@@ -29,35 +29,6 @@ static uint16_t estimatePowerMw(const SensorMessage &m)
     total += (uint16_t)((uint32_t)m.motorRight * 990 / 8192);
 
     return total;
-}
-
-void onSent(const uint8_t *macAddr, esp_now_send_status_t status)
-{
-    Serial.print("Send status: ");
-    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "OK" : "FAIL");
-}
-
-void onCommand(const uint8_t *mac, const uint8_t *data, int dataLen)
-{
-    if (dataLen != sizeof(CommandMessage))
-        return;
-
-    CommandMessage cmd;
-    memcpy(&cmd, data, sizeof(cmd));
-
-    if (cmd.magic != CMD_MAGIC)
-        return;
-
-    switch (cmd.command)
-    {
-    case CMD_LOCATE:
-        Serial.println("LOCATE command received, blinking LEDs");
-        dezibot.multiColorLight.blink(5, 0x00006400, ALL, 500);
-        break;
-    default:
-        Serial.printf("Unknown command: 0x%02X\n", cmd.command);
-        break;
-    }
 }
 
 static void telemetryTask(void *param)
@@ -117,7 +88,7 @@ static void telemetryTask(void *param)
 
         msg.estimatedPowerMw = estimatePowerMw(msg);
 
-        esp_now_send(broadcastAddress, (uint8_t *)&msg, sizeof(msg));
+        transport->sendTelemetry(msg);
         counter++;
 
         vTaskDelay(pdMS_TO_TICKS(1000));
@@ -127,45 +98,49 @@ static void telemetryTask(void *param)
 void setup()
 {
     dezibot.begin();
+    delay(1000);
 
-    WiFi.mode(WIFI_STA);
-    WiFi.disconnect();
-    esp_wifi_set_channel(ESPNOW_CHANNEL, WIFI_SECOND_CHAN_NONE);
+    Serial.printf("Setup: protocol=%s, free heap=%u\n", TRANSPORT_PROTOCOL, esp_get_free_heap_size());
 
-    if (esp_now_init() != ESP_OK)
+    if (strcmp(TRANSPORT_PROTOCOL, "bluetooth") == 0)
+        transport = new BleSenderTransport();
+    else
+        transport = new EspNowSenderTransport();
+
+    Serial.println("Setup: transport created, setting callback...");
+
+    transport->setCommandCallback([](const CommandMessage &cmd)
+                                  {
+        switch (cmd.command)
+        {
+        case CMD_LOCATE:
+            Serial.println("LOCATE command received, blinking LEDs");
+            dezibot.multiColorLight.blink(5, 0x00006400, ALL, 500);
+            break;
+        default:
+            Serial.printf("Unknown command: 0x%02X\n", cmd.command);
+            break;
+        } });
+
+    Serial.println("Setup: calling transport->begin()...");
+
+    if (!transport->begin())
     {
-        Serial.println("ESP-NOW init failed");
+        Serial.println("Transport init failed");
         return;
     }
 
-    esp_now_register_send_cb(onSent);
-    esp_now_register_recv_cb(onCommand);
-
-    esp_now_peer_info_t peerInfo = {};
-    memcpy(peerInfo.peer_addr, broadcastAddress, 6);
-    peerInfo.channel = ESPNOW_CHANNEL;
-    peerInfo.encrypt = false;
-
-    if (esp_now_add_peer(&peerInfo) != ESP_OK)
-    {
-        Serial.println("Failed to add broadcast peer");
-        return;
-    }
+    Serial.printf("Setup: transport ready, free heap=%u\n", esp_get_free_heap_size());
 
     temp_sensor_config_t tempCfg = TSENS_CONFIG_DEFAULT();
     temp_sensor_set_config(tempCfg);
     temp_sensor_start();
 
     xTaskCreatePinnedToCore(telemetryTask, "telemetry", 4096, NULL, 5, NULL, 0);
-
-    Serial.println("ESP-NOW sender ready");
-    Serial.print("MAC: ");
-    Serial.println(WiFi.macAddress());
+    Serial.println("Setup: complete");
 }
 
 void loop()
 {
-    dezibot.motion.rotateClockwise(500);
     delay(2000);
-    dezibot.motion.stop();
 }

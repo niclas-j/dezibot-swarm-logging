@@ -39,73 +39,117 @@ Das Vorgängerprojekt [Dezibot Logging](https://github.com/Tim-Dietrich/dezibot-
 
 | Feature | Beschreibung |
 |---------|-------------|
+| **Multi-Protokoll Transport** | Adapter-Pattern für austauschbare Kommunikation — jeder Sender wählt unabhängig zwischen ESP-NOW oder Bluetooth Low Energy (BLE GATT) |
 | **ESP-NOW Sensor-Streaming** | Sender-Dezibots sammeln alle Sensordaten und senden sie per ESP-NOW Broadcast an den Empfänger (1 Hz) |
+| **BLE GATT Sensor-Streaming** | Alternative zu ESP-NOW: Sender agiert als BLE Peripheral (GATT Server), Empfänger verbindet sich als Central (GATT Client) und empfängt Notifications |
 | **Swarm-Dashboard** | Übersichtsseite zeigt alle verbundenen Bots mit Status (Online/Offline), Uptime, Nachrichtenzähler und geschätzter Leistungsaufnahme |
 | **Remote Live-Daten** | Klick auf einen Bot im Swarm-Dashboard öffnet dessen Live-Sensordaten als Echtzeit-Charts |
 | **Bidirektionale Kommunikation** | Vom Dashboard aus können Befehle an einzelne Bots gesendet werden (z.B. "Locate" lässt einen Bot mit LEDs blinken) |
 | **System-Metriken** | Freier Heap-Speicher, minimaler Heap-Watermark, Anzahl FreeRTOS-Tasks und Chip-Temperatur werden mitgestreamt |
 | **Geschätzte Leistungsaufnahme** | Softwarebasierte Schätzung des aktuellen Stromverbrauchs basierend auf Komponentenzuständen (Motoren, CPU, WiFi) (Nur Demo-Feature, nicht zuverlässig) |
 | **Hintergrund-Telemetrie** | Telemetrie läuft in eigenem FreeRTOS-Task — Roboter-Logik in `loop()` blockiert nicht mehr das Senden von Sensordaten |
-| **Modernes Frontend** | Kompletter Neubau des Frontends zum besseren Monitorings mehrerer Dezibots
+| **Modernes Frontend** | Kompletter Neubau des Frontends zum besseren Monitorings mehrerer Dezibots |
 
 ---
 
 ## Architektur
 
-### Systemübersicht
+### Transport-Adapter Pattern
+
+Sender und Empfänger kommunizieren über ein austauschbares Transport-Layer. Jeder Sender wählt unabhängig sein Protokoll (`TRANSPORT_PROTOCOL` Define in `main_sender.cpp`). Der Empfänger lauscht auf **beiden** Protokollen gleichzeitig und führt alle Daten in einer gemeinsamen `SenderMap` zusammen.
+
+```
+SenderTransport (abstract)         ReceiverTransport (abstract)
+├── EspNowSenderTransport          ├── EspNowReceiverTransport
+└── BleSenderTransport             └── BleReceiverTransport
+```
+
+### Systemübersicht: ESP-NOW Modus
 
 ```plantuml
 @startuml
 skinparam backgroundColor transparent
 skinparam componentStyle rectangle
 
-node "Sender Dezibot 1" as S1 {
-  [Sensoren\n(IMU, Licht, Farbe, IR)] as Sens1
-  [Telemetrie-Task\n(FreeRTOS, 1 Hz)] as Tel1
-  [Kommando-Handler] as Cmd1
-}
-
-node "Sender Dezibot 2" as S2 {
-  [Sensoren] as Sens2
-  [Telemetrie-Task] as Tel2
-  [Kommando-Handler] as Cmd2
-}
-
-node "Sender Dezibot N" as SN {
-  [Sensoren] as SensN
-  [Telemetrie-Task] as TelN
-  [Kommando-Handler] as CmdN
+node "Sender Dezibot\n(TRANSPORT_PROTOCOL = esp_now)" as S {
+  [Sensoren\n(IMU, Licht, Farbe, IR)] as Sens
+  [Telemetrie-Task\n(FreeRTOS, 1 Hz)] as Tel
+  [EspNowSenderTransport] as ST
+  [Kommando-Handler\n(commandCallback)] as Cmd
 }
 
 node "Empfänger Dezibot" as R {
-  [ESP-NOW Receiver\nonReceive()] as Recv
+  [EspNowReceiverTransport] as Recv
   [SenderMap\n(MAC → SensorMessage)] as Map
   [WebServer\n(Port 80)] as Web
-  [CommandSender\nESP-NOW Unicast] as CmdSend
 }
 
 cloud "Browser" as B {
   [SolidJS SPA\nDashboard] as UI
 }
 
-Sens1 --> Tel1
-Tel1 -right-> Recv : ESP-NOW\nBroadcast\n(SensorMessage)
-Sens2 --> Tel2
-Tel2 -right-> Recv : ESP-NOW
-SensN --> TelN
-TelN -right-> Recv : ESP-NOW
+Sens --> Tel
+Tel --> ST : sendTelemetry(msg)
+ST -right-> Recv : ESP-NOW\nBroadcast\n(SensorMessage)
+Recv --> Map : onTelemetry()
 
-Recv --> Map
 Map --> Web
 Web --> UI : HTTP/JSON\nPolling (1s)
 
 UI --> Web : POST /command/locate
-Web --> CmdSend
-CmdSend --> Cmd1 : ESP-NOW\nUnicast\n(CommandMessage)
-CmdSend --> Cmd2 : ESP-NOW
-CmdSend --> CmdN : ESP-NOW
+Web -left-> Recv : sendCommand(mac, cmd)
+Recv -left-> Cmd : ESP-NOW\nUnicast\n(CommandMessage)
 @enduml
 ```
+
+Der Sender arbeitet im WiFi STA-Modus und sendet per ESP-NOW Broadcast (Kanal 1). Der Empfänger empfängt über seinen SoftAP-Interface und sendet Kommandos per Unicast zurück.
+
+### Systemübersicht: Bluetooth (BLE GATT) Modus
+
+```plantuml
+@startuml
+skinparam backgroundColor transparent
+skinparam componentStyle rectangle
+
+node "Sender Dezibot\n(TRANSPORT_PROTOCOL = bluetooth)" as S {
+  [Sensoren\n(IMU, Licht, Farbe, IR)] as Sens
+  [Telemetrie-Task\n(FreeRTOS, 1 Hz)] as Tel
+  [BleSenderTransport\n(BLE GATT Server / Peripheral)] as ST
+  [Kommando-Handler\n(commandCallback)] as Cmd
+}
+
+node "Empfänger Dezibot" as R {
+  [BleReceiverTransport\n(BLE GATT Client / Central)] as Recv
+  [SenderMap\n(MAC → SensorMessage)] as Map
+  [WebServer\n(Port 80)] as Web
+}
+
+cloud "Browser" as B {
+  [SolidJS SPA\nDashboard] as UI
+}
+
+Sens --> Tel
+Tel --> ST : sendTelemetry(msg)
+ST -right-> Recv : BLE GATT\nNotify\n(Sensor Characteristic)
+Recv --> Map : onTelemetry()
+
+Map --> Web
+Web --> UI : HTTP/JSON\nPolling (1s)
+
+UI --> Web : POST /command/locate
+Web -left-> Recv : sendCommand(mac, cmd)
+Recv -left-> Cmd : BLE GATT\nWrite\n(Command Characteristic)
+@enduml
+```
+
+Der Sender agiert als BLE Peripheral (GATT Server) und advertised einen Custom Service (`DE210001-...`). Der Empfänger scannt periodisch nach Dezibots, verbindet sich automatisch und abonniert Sensor-Notifications. Kommandos werden per GATT Write an die Command-Characteristic gesendet.
+
+**BLE GATT Characteristics:**
+
+| Characteristic | UUID | Richtung | Beschreibung |
+|---------------|------|----------|-------------|
+| Sensor Data | `DE210002-...` | Sender → Empfänger (Notify) | SensorMessage (83 Bytes), 1 Hz |
+| Command | `DE210003-...` | Empfänger → Sender (Write) | CommandMessage (3 Bytes) |
 
 ### Datenfluss: Sensordaten (Sender → Dashboard)
 
@@ -113,18 +157,21 @@ CmdSend --> CmdN : ESP-NOW
 @startuml
 skinparam backgroundColor transparent
 
-participant "Sender\nloop() / telemetryTask" as S
-participant "ESP-NOW" as E
-participant "Empfänger\nonReceive()" as R
+participant "Sender\ntelemetryTask" as S
+participant "SenderTransport" as T
+participant "ReceiverTransport" as R
+participant "onTelemetry()" as OT
 participant "SenderMap" as M
-participant "WebServer\nSwarmPage / LiveDataPage" as W
-participant "Browser\nSolidJS" as B
+participant "WebServer" as W
+participant "Browser" as B
 
 S -> S : Sensoren auslesen\n+ SensorMessage bauen
-S -> E : esp_now_send(broadcast, msg)
-E -> R : Callback mit MAC + Daten
-R -> R : Magic prüfen (0xDE21)
-R -> M : senderMap[MAC].msg = msg\nsenderMap[MAC].lastSeen = millis()
+S -> T : transport->sendTelemetry(msg)
+note right of T : ESP-NOW: esp_now_send(broadcast)\nBLE: characteristic->notify()
+T -> R : Protokollabhängig
+R -> OT : Callback mit MAC + Daten
+OT -> OT : Magic prüfen (0xDE21)
+OT -> M : senderMap[MAC].msg = msg\nsenderMap[MAC].lastSeen = millis()
 B -> W : GET /getSwarmData (jede 1s)
 W -> M : Mutex lock, Map iterieren
 W -> B : JSON Array [{mac, counter, uptime, online, powerMw, ...}]
@@ -143,18 +190,23 @@ skinparam backgroundColor transparent
 participant "Browser" as B
 participant "WebServer\nSwarmPage" as W
 participant "sendCommandToDevice()" as CS
-participant "ESP-NOW" as E
-participant "Sender\nonCommand()" as S
+participant "EspNowReceiverTransport" as EN
+participant "BleReceiverTransport" as BLE
+participant "Sender\ncommandCallback" as S
 participant "MultiColorLight" as LED
 
 B -> W : POST /command/locate\nmac=F4:12:FA:44:65:A8
 W -> W : MAC parsen
 W -> CS : sendCommandToDevice(mac, CMD_LOCATE)
-CS -> CS : esp_now_add_peer(mac, WIFI_IF_AP)
-CS -> E : esp_now_send(mac, CommandMessage)
-E -> S : Callback mit Daten
+CS -> EN : espNowTransport.sendCommand()
+alt ESP-NOW erfolgreich
+  EN -> S : ESP-NOW Unicast\n(CommandMessage)
+else ESP-NOW fehlgeschlagen
+  CS -> BLE : bleTransport.sendCommand()
+  BLE -> S : BLE GATT Write\n(CommandMessage)
+end
 S -> S : Magic prüfen (0xDE22)
-S -> S : switch(CMD_LOCATE)
+S -> S : commandCallback(cmd)
 S -> LED : blink(5, grün, ALL, 500ms)
 @enduml
 ```
@@ -165,6 +217,20 @@ S -> LED : blink(5, grün, ALL, 500ms)
 @startuml
 skinparam backgroundColor transparent
 
+package "Transport Adapter (src/transport/)" {
+  [SenderTransport.h\n(Abstract Base Class)] as STA
+  [ReceiverTransport.h\n(Abstract Base Class)] as RTA
+  [EspNowSenderTransport] as ENST
+  [EspNowReceiverTransport] as ENRT
+  [BleSenderTransport\n(BLE GATT Server)] as BLST
+  [BleReceiverTransport\n(BLE GATT Client)] as BLRT
+}
+
+STA <|-- ENST
+STA <|-- BLST
+RTA <|-- ENRT
+RTA <|-- BLRT
+
 package "Shared (src/shared/)" {
   [SensorMessage.h\n83 Bytes, 25 Felder] as SM
   [CommandMessage.h\n3 Bytes: magic + command] as CM
@@ -174,14 +240,15 @@ package "Shared (src/shared/)" {
 
 package "Sender Firmware (main_sender.cpp)" {
   [telemetryTask()\nFreeRTOS Task, Core 0] as TT
-  [onCommand()\nESP-NOW Recv Callback] as OC
+  [commandCallback\n(Lambda)] as OC
   [estimatePowerMw()\nSoftware Power Model] as PW
-  [setup() / loop()\nInit + User Robot Logic] as SL
+  [setup()\nProtokollwahl per #define] as SL
 }
 
 package "Empfänger Firmware (main_receiver.cpp)" {
-  [onReceive()\nESP-NOW Recv Callback] as OR
-  [sendCommandToDevice()\nESP-NOW Unicast via AP] as SCD
+  [onTelemetry()\nGemeinsamer Callback] as OR
+  [sendCommandToDevice()\nESP-NOW → BLE Fallback] as SCD
+  [EspNowReceiverTransport\n+ BleReceiverTransport\n(beide aktiv)] as DualRecv
 }
 
 package "Debug Server (src/debugServer/)" {
@@ -200,11 +267,13 @@ package "Web Frontend (web/)" {
   [settings.tsx\nSensor On/Off Toggles] as FSt
 }
 
-TT --> SM : baut
+TT --> STA : sendTelemetry(msg)
 OC --> CM : parst
 PW --> SM : liest Motor-Werte
+SL --> STA : Erzeugt ESP-NOW\noder BLE Transport
+DualRecv --> OR : Callback
 OR --> SMap : schreibt
-SCD --> CM : sendet
+SCD --> RTA : sendCommand()
 SP --> SMap : liest
 SP --> CSend : ruft auf
 LP --> SMap : liest
@@ -299,6 +368,14 @@ dezibot-swarm-logging/
 │   ├── main_sender.cpp         # Sender-Firmware: Telemetrie-Task + Kommando-Handler
 │   ├── main_receiver.cpp       # Empfänger-Firmware: ESP-NOW Empfang + Kommando-Senden
 │   ├── Dezibot.h / .cpp        # Hauptklasse, initialisiert alle Komponenten
+│   │
+│   ├── transport/              # Transport-Adapter Pattern (Protokoll-Abstraktion)
+│   │   ├── SenderTransport.h   # Abstrakte Basisklasse (Sender-Seite)
+│   │   ├── ReceiverTransport.h # Abstrakte Basisklasse (Empfänger-Seite)
+│   │   ├── EspNowSenderTransport.h/.cpp   # ESP-NOW Sender-Implementierung
+│   │   ├── EspNowReceiverTransport.h/.cpp # ESP-NOW Empfänger-Implementierung
+│   │   ├── BleSenderTransport.h/.cpp      # BLE GATT Server (Peripheral)
+│   │   └── BleReceiverTransport.h/.cpp    # BLE GATT Client (Central)
 │   │
 │   ├── shared/                 # Gemeinsame Definitionen (Sender + Empfänger)
 │   │   ├── SensorMessage.h     # Sensor-Nachrichtenformat (83 Bytes)
@@ -410,6 +487,15 @@ Der Empfänger startet einen WiFi Access Point. Die SSID und IP-Adresse werden �
 
 ### 4. Sender flashen
 
+Vor dem Flashen kann das Transportprotokoll in `src/main_sender.cpp` gewählt werden:
+
+```cpp
+#define TRANSPORT_PROTOCOL "esp_now"   // Standard: ESP-NOW Broadcast
+#define TRANSPORT_PROTOCOL "bluetooth" // Alternativ: BLE GATT
+```
+PW4studProj
+Jeder Sender kann unabhängig ein anderes Protokoll verwenden. Der Empfänger unterstützt beide gleichzeitig.
+
 ```bash
 pio run -e esp32s3_sender -t upload
 ```
@@ -520,6 +606,14 @@ Aktivierung und Deaktivierung einzelner Sensorfunktionen auf dem lokalen Empfän
 
 ## Bekannte Einschränkungen
 
+### BLE Verbindungslimit
+
+Der ESP32-S3 unterstützt ca. 3–9 gleichzeitige BLE-Verbindungen (konfigurationsabhängig). Große Schwärme können dieses Limit erreichen. ESP-NOW hat diese Einschränkung nicht (Broadcast-basiert). In gemischten Setups empfiehlt sich ESP-NOW für die Mehrzahl der Sender und BLE nur für einzelne Test-Dezibots.
+
+### BLE Verbindungsaufbau
+
+Der BLE-Empfänger scannt alle 10 Sekunden nach neuen Dezibots. Zwischen dem Einschalten eines BLE-Senders und dem Erscheinen im Dashboard können bis zu ~15 Sekunden vergehen (Scan-Intervall + Verbindungsaufbau + Service Discovery). ESP-NOW-Sender erscheinen sofort nach dem ersten Broadcast.
+
 ### WiFi-Kanal
 
 Sender und Empfänger müssen auf dem gleichen WiFi-Kanal arbeiten. Der Sender setzt Kanal 1 explizit (`esp_wifi_set_channel`). Der Empfänger betreibt einen SoftAP, dessen Kanal standardmäßig 1 ist. Bei Problemen muss der Kanal manuell abgeglichen werden.
@@ -560,7 +654,9 @@ Nutzt die Legacy-API `driver/temp_sensor.h` (ESP-IDF v4.x). Genauigkeit ~±2–3
 - **Sensor-Daten Export** — Aufzeichnung und Download als CSV/JSON für Analyse in Excel/Python
 - **Remote Command Console** — Erweiterte Fernsteuerung: Motoren starten/stoppen, LED-Farben setzen, synchronisierte Aktionen
 - **Alert System** — Schwellwerte definieren (z.B. Heap < 50KB), Warnungen im Dashboard anzeigen
+- **CPU-Auslastung** — Per-Core CPU-Nutzung via FreeRTOS Runtime Stats (benötigt `CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS=y`)
 - **RSSI-basierte Proximity** — Signalstärke der ESP-NOW Pakete auswerten für grobe Entfernungsschätzung zwischen Bots
+- **Batteriespannung** — Falls ein ADC-Pin mit einem Spannungsteiler an der Batterie verbunden ist, könnte der Ladestand angezeigt werden
 
 ---
 
