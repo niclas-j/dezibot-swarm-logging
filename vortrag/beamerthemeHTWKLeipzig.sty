@@ -1,0 +1,273 @@
+\ProvidesPackage{beamerthemeHTWKLeipzig}[09/11/2023]
+
+
+\usepackage{fontspec}
+\setsansfont{Arial}
+
+\usepackage{tikz}
+
+\mode<presentation>
+
+%%%%%%% Define color %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\definecolor{mainColor}{RGB}{138, 194, 209}
+
+\definecolor{hellgrau}{RGB}{201, 201, 201}
+\definecolor{basalt}{RGB}{38, 42, 49}
+
+%%%%%%%%%%%%%%%% Title page Layout %%%%%%%%%%%%%%%
+%\setbeamersize{sidebar width left=1mm, sidebar width right=1mm}
+
+\newcommand{\titleHeaderLayout}
+{
+% trim={<left> <lower> <right> <upper>}
+}
+
+\institute
+{\faculty
+\\\university}
+
+%FOOTER TEXT
+\newcommand{\firstLine}{\insertauthor, \faculty}
+\newcommand{\secondLine}{\universityLong}
+
+
+\makeatletter
+\setbeamercolor{title}{fg=black}
+\setbeamerfont{title}{size=\LARGE, series=\bfseries}
+\setbeamerfont{institute}{size=\small,series=\mdseries}
+
+\setbeamertemplate{title page}
+{
+    \begingroup
+    \begin{beamercolorbox}[wd=\textwidth,ht=2.5em,dp=1em]{headline}
+        \begin{columns}
+            \begin{column}{.70\textwidth}
+                \includegraphics[width=2cm,keepaspectratio]{imglib/HTWK_OHNE.png} % Adjust the space as needed
+            \end{column}
+            \begin{column}{.30\textwidth}
+                \includegraphics[width=2.5cm,keepaspectratio]{imglib/FIM_SCREEN.png} % Adjust the space as needed
+            \end{column}
+        \end{columns}
+    \end{beamercolorbox}
+    \vskip1em\par
+    \centering
+    \vspace*{2em} % Adjust the vertical space as needed
+    \begin{beamercolorbox}[sep=8pt,center]{title}
+        \usebeamerfont{title}\inserttitle\par%
+        \ifx\insertsubtitle\@empty%
+        \else%
+        \vskip0.5em%
+            {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}%
+        \fi%     
+    \end{beamercolorbox}%
+    \vskip6em\par
+
+    \vskip1em\par
+    \begin{columns}
+        \begin{column}{.55\textwidth}
+            \centering
+            \begin{beamercolorbox}{date}
+                \usebeamerfont{date}\insertdate
+            \end{beamercolorbox}
+            \begin{beamercolorbox}{author}
+                \usebeamerfont{author}\insertauthor
+            \end{beamercolorbox}
+        \end{column}
+        \begin{column}{.45\textwidth}
+            \centering
+            \begin{beamercolorbox}{institute}
+                \usebeamerfont{institute}\insertinstitute
+            \end{beamercolorbox}
+        \end{column}
+    \end{columns}
+    \vskip2em\par
+    \endgroup
+}
+
+\makeatother
+
+%%%%%%%%%%%%%%%%%% Header and Footer %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setbeamertemplate{navigation symbols}{}
+
+%%%%%%% Footline background (not footer) %%%%%%%%%%%%%%%%%%%%
+\setbeamertemplate{background}{
+    \begin{tikzpicture}[remember picture, overlay,shift=(current page.north west)]
+        \begin{scope}[x={(current page.north east)},y={(current page.south west)}]
+            \path[gray, thin]  (0.07,0.89) edge node[right, yshift=3pt] {\textcolor{black}{\tiny \textsf{\firstLine}}} (0.07,0.98);
+            \path[gray]  (0.07,0.89) edge node[right, yshift=-3pt] {\textcolor{black}{\tiny \textsf{\secondLine}\hspace*{0.915\textwidth}}\textcolor{mainColor}{\tiny \insertframenumber}} (0.07,0.98);
+
+
+            \draw[mainColor,fill=mainColor, thin] (0.05,0.07) -- (0.01,0.07) -- (0.01,0.19) -- (0.05,0.19) -- cycle;
+            \draw[mainColor,fill=mainColor, thin] (0.95,0.07) -- (0.99,0.07) -- (0.99,0.19) -- (0.95,0.19) -- cycle;
+            
+            % Add page number at bottom left
+            \node[anchor=south west, black] at (0.02, 0.96) { \insertframenumber};
+
+            %LOGO 
+            \node[anchor=south west, black] at (0.86, 0.965) { \includegraphics[height=10pt, keepaspectratio]{imglib/HTWK_OHNE.png}};
+        \end{scope}
+    \end{tikzpicture}
+}
+
+%%%%%%% Headline %%%%%%%%%%%%%%%%%%%%
+\setbeamertemplate{headline}{
+    \begin{beamercolorbox}[wd=\paperwidth, ht=4mm]{title in head/foot}
+        % gray and black line at the start
+        \begin{tikzpicture}
+            \draw [white](0,0)--(0.8,0); % Only to help position other lines
+            \draw [black, very thin](0,.08) -- (.8,.08);
+            \draw [black, very thin] (0,.11) -- (.8,.11);
+        \end{tikzpicture}
+        \small \ \textbf{\insertshorttitle}\ | \insertsection
+
+    \end{beamercolorbox}
+
+}
+%%%%%%% Frame title %%%%%%%%%%%%%%%
+\setbeamertemplate{frametitle}{\vskip 10pt\color{black}\bfseries \insertframetitle\par \vskip 2pt}
+
+
+%%%%%%%%%%%%%%%%%%%% Section page layout for 16/9 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\SpecialPageLayout}
+{\setbeamertemplate{background}{
+    \begin{tikzpicture}[remember picture, overlay,shift=(current page.north west)]
+        \begin{scope}
+            [x={(current page.north east)},y={(current page.south west)}]
+            \draw[mainColor,fill=mainColor, thin] (0.05,0.2) -- (0.01,0.2) -- (0.01,0.7) -- (0.05,0.7) -- cycle;
+            \draw[mainColor,fill=mainColor, thin] (0.95,0.2) -- (0.99,0.2) -- (0.99,0.7) -- (0.95,0.7) -- cycle;
+            \path[gray, thin]  (0.07,0.89) edge node[right, yshift=3pt] {\textcolor{black}{\tiny \textsf{\firstLine}}} (0.07,.98);
+            \path[gray]  (0.07,0.89) edge node[right, yshift=-3pt] {\textcolor{black}{\tiny \textsf{\secondLine}}} (0.07,.98);
+            % Add page number at bottom left
+            \node[anchor=south west, black] at (0.02, 0.96) { \insertframenumber};
+
+            %LOGO 
+            \node[anchor=south west, black] at (0.86, 0.965) { \includegraphics[height=10pt, keepaspectratio]{imglib/HTWK_OHNE.png}};
+        \end{scope}
+
+    \end{tikzpicture}
+}}
+
+
+%%%%%%%%%%%%%%%%%% Create the sub-sub-sections number %%%%%%%%%%%%%%%%%%%%%%%%%%%
+\defbeamertemplate{subsubsection in toc}{subsubsections numbered}
+{\leavevmode\leftskip=3.5em%
+\rlap{\hskip-3.5em\inserttocsectionnumber.\inserttocsubsectionnumber.\inserttocsubsubsectionnumber}%
+\inserttocsubsubsection\par}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% This is to create title page. The data are taken from TitlePageInfo.tex
+\newcommand{\maketitlepage}{{
+    \setbeamertemplate{background}{
+        \begin{tikzpicture}[remember picture, overlay,shift=(current page.north west)]
+            \begin{scope}
+                [x={(current page.north east)},y={(current page.south west)}]
+                \draw[mainColor,fill=mainColor, thin] (0.1,0.3) -- (0.30,0.25) -- (0.45,1) -- (0.25,1) -- cycle;
+                \draw[mainColor,fill=mainColor, thin] (0.6,0.3) -- (0.80,0.25) -- (0.95,1) -- (0.75,1) -- cycle;
+
+            \end{scope}
+        \end{tikzpicture}}
+    \setbeamertemplate{headline}{}
+    \begin{frame}
+        \titlepage %
+    \end{frame}
+}}
+
+% Table of contents color and indentation
+%-------- Many thanks to Victor Jüttner for this part -----------------------
+\setbeamercolor{section in toc}{fg=mainColor}
+
+\defbeamertemplate{section in toc}{mysections numbered}
+{\leavevmode
+\parbox[t]{1em}{\inserttocsectionnumber.}
+\parbox[t]{.4\textwidth}{\inserttocsection}\par}
+\setbeamertemplate{section in toc}[mysections numbered]
+
+\defbeamertemplate{subsection in toc}{mysubsections numbered}
+{\leavevmode
+\hspace{0.5em}
+\parbox[t]{1em}{\scriptsize\inserttocsectionnumber.\inserttocsubsectionnumber}
+\parbox[t]{.4\textwidth}{\scriptsize\inserttocsubsection}\par}
+\setbeamertemplate{subsection in toc}[mysubsections numbered]
+
+\defbeamertemplate{subsubsection in toc}{mysubsubsections numbered}
+{\leavevmode
+\hspace{1.5em}
+\parbox[t]{2em}{\tiny\inserttocsectionnumber.\inserttocsubsectionnumber.\inserttocsubsubsectionnumber}
+\parbox[t]{.4\textwidth}{\tiny\inserttocsubsubsection}\par}
+\setbeamertemplate{subsubsection in toc}[mysubsubsections numbered]
+%--------------------------------------------------------------------------
+\def\definepagelayoutwithAR{\SpecialPageLayout}
+%% This is to make table of contents/ overview slide after title page
+\newcommand{\maketableofcontents}{
+        {
+        \definepagelayoutwithAR
+        \begin{frame}{Gliederung}
+            \tableofcontents
+            \vspace*{8em}  %%MOVE THE Gliederung up to the top
+        \end{frame}
+    }
+}
+
+%% This will show table of content slides before move to each subsection
+\newcommand{\makesubsectionpopup}{
+    \AtBeginSubsection[]
+    {{
+        \definepagelayoutwithAR
+        \begin{frame}{Gliederung}
+            \tableofcontents[currentsection,currentsubsection]
+            \vspace*{3em}
+
+        \end{frame}
+    }}
+}
+
+%% This will show section name slide before move to each section
+\newcommand{\makesectionpopup}{
+    \AtBeginSection[]
+    {{
+        \definepagelayoutwithAR
+        \begin{frame}
+            \textbf{\LARGE {\insertsection}}
+
+        \end{frame}
+    }}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% Re-position Footnote %%%%%%%%%%%%%%%%%%%%
+\setbeamertemplate{footnote}{%
+    \raggedright\hspace*{0.4\textwidth}\vspace*{2pt}%{\insertfootnotemark}
+    \parbox{0.5\textwidth}{$^{\text{\tiny\thefootnote}}$\tiny\insertfootnotetext}
+}
+
+\newcommand\addfootspace[1]{%
+    \begingroup
+    \renewcommand\thefootnote{}\footnote{#1}%
+    \addtocounter{footnote}{-1}%
+    \endgroup
+}
+
+%%%%%%%%%%% Switch off the footnoterule %%%%%%%%%%%%%%%%%%%%%%%
+\renewcommand{\footnoterule}{}
+%\renewcommand{\footnoterule}{\kern -20pt \hrule width \columnwidth \kern 25pt}
+
+%%%%%%%%%%% Bibliograpy items as number %%%%%%%%%%%%%%%%%%%
+\setbeamertemplate{bibliography item}{\insertbiblabel}
+
+% Itemizesymbol
+\setbeamercolor{itemize item}{fg=mainColor}
+\setbeamertemplate{itemize item}{--}
+\setbeamercolor{itemize subitem}{fg=mainColor}
+\setbeamertemplate{itemize subitem}{--}
+\setbeamercolor{itemize subsubitem}{fg=mainColor}
+\setbeamertemplate{itemize subsubitem}{--}
+\setbeamercolor{enumerate item}{fg=mainColor}
+\setbeamercolor{enumerate subitem}{fg=mainColor}
+\setbeamercolor{enumerate subitem}{fg=mainColor}
+
+%%%%%%%%%%%%%%%%%%%% Captions %%%%%%%%%%%%%%%%%%%%%%
+\setbeamercolor{caption name}{fg=black!50}
+\setbeamertemplate{caption}[numbered]
+
+%%%%%%%%%%%%%%%%%%%% Alert %%%%%%%%%%%%%%%%%%%
+\setbeamercolor{alerted text}{fg=mainColor}
+\setbeamertemplate{blocks}[rounded][shadow=true]

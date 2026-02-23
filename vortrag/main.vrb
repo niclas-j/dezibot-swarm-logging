@@ -1,0 +1,14 @@
+\frametitle{Build- und Flash-Workflow}
+\small
+^^I\begin{verbatim}
+cd web
+npm install
+npm run build
+
+pio run -e esp32s3_receiver -t uploadfs
+pio run -e esp32s3_receiver -t upload
+pio run -e esp32s3_sender -t upload
+\end{verbatim}
+^^I\begin{itemize}
+^^I^^I\item Ein Build erzeugt sofort testbare Firmware und die passende Weboberflache.
+^^I\end{itemize}

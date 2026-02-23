@@ -1,0 +1,35 @@
+@startuml
+skinparam backgroundColor white
+skinparam classAttributeIconSize 0
+
+abstract class SenderTransport {
+  +sendTelemetry(msg)
+}
+
+abstract class ReceiverTransport {
+  +init(callback)
+  +sendCommand(mac, cmd)
+}
+
+class EspNowSenderTransport
+class BleSenderTransport
+class EspNowReceiverTransport
+class BleReceiverTransport
+
+class SensorMessage
+class CommandMessage
+class SenderMap
+
+SenderTransport <|-- EspNowSenderTransport
+SenderTransport <|-- BleSenderTransport
+ReceiverTransport <|-- EspNowReceiverTransport
+ReceiverTransport <|-- BleReceiverTransport
+
+EspNowSenderTransport ..> SensorMessage
+BleSenderTransport ..> SensorMessage
+EspNowReceiverTransport ..> CommandMessage
+BleReceiverTransport ..> CommandMessage
+
+EspNowReceiverTransport --> SenderMap
+BleReceiverTransport --> SenderMap
+@enduml

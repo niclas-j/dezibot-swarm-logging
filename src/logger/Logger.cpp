@@ -24,36 +24,37 @@ Logger& Logger::getInstance() {
 }
 
 // Log a message with a given level
-void Logger::log(const LogEntry::Level level, const std::string& message) const {
+void Logger::log(const LogEntry::Level level, const std::string& message, const std::string& sourceMac) const {
     if (!loggingEnabled) {
         return;
     }
     const LogEntry::Entry entry = {
         .level = level,
         .timestamp = getCurrentTimestamp(),
-        .message = message
+        .message = message,
+        .sourceMac = sourceMac
     };
     LogDatabase::getInstance().addLog(entry);
 }
 
-void Logger::logInfo(const std::string& message) const {
-    log(LogEntry::INFO, message);
+void Logger::logInfo(const std::string& message, const std::string& sourceMac) const {
+    log(LogEntry::INFO, message, sourceMac);
 }
 
-void Logger::logDebug(const std::string& message) const {
-    log(LogEntry::DEBUG, message);
+void Logger::logDebug(const std::string& message, const std::string& sourceMac) const {
+    log(LogEntry::DEBUG, message, sourceMac);
 }
 
-void Logger::logWarning(const std::string& message) const {
-    log(LogEntry::WARNING, message);
+void Logger::logWarning(const std::string& message, const std::string& sourceMac) const {
+    log(LogEntry::WARNING, message, sourceMac);
 }
 
-void Logger::logError(const std::string& message) const {
-    log(LogEntry::ERROR, message);
+void Logger::logError(const std::string& message, const std::string& sourceMac) const {
+    log(LogEntry::ERROR, message, sourceMac);
 }
 
-void Logger::logTrace(const std::string& message) const {
-  	log(LogEntry::TRACE, message);
+void Logger::logTrace(const std::string& message, const std::string& sourceMac) const {
+	  log(LogEntry::TRACE, message, sourceMac);
 }
 
 // Generate a placeholder timestamp (to be replaced with actual implementation)

@@ -38,7 +38,7 @@ static void storeTelemetry(const uint8_t *mac, const SensorMessage &msg, Transpo
     snprintf(logBuf, sizeof(logBuf), "Telemetry from %s [%s]: counter=%lu uptime=%lu",
              macStr, transport == TRANSPORT_BLE ? "BLE" : "ESP-NOW",
              (unsigned long)msg.counter, (unsigned long)msg.uptimeMs);
-    Logger::getInstance().logInfo(std::string(logBuf));
+    Logger::getInstance().logInfo(std::string(logBuf), std::string(macStr));
 }
 
 static void onEspNowTelemetry(const uint8_t *mac, const SensorMessage &msg)

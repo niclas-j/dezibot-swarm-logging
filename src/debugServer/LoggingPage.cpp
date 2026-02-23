@@ -30,26 +30,32 @@ void LoggingPage::handler() {
 
 void LoggingPage::sendLogs() const {
     String logLevel = serverPointer->arg("level");
+    String macFilter = serverPointer->arg("mac");
     auto& logs = LogDatabase::getInstance().getLogs();
-    processLogs(logs, logLevel);
+    processLogs(logs, logLevel, macFilter);
 }
 
 void LoggingPage::sendNewLogs() const {
     String logLevel = serverPointer->arg("level");
+    String macFilter = serverPointer->arg("mac");
     auto logs = LogDatabase::getInstance().getNewLogs();
-    processLogs(logs, logLevel);
+    processLogs(logs, logLevel, macFilter);
 }
 
-void LoggingPage::processLogs(const std::vector<LogEntry::Entry>& logs, const String& logLevel) const {
+void LoggingPage::processLogs(const std::vector<LogEntry::Entry>& logs, const String& logLevel, const String& macFilter) const {
     JsonDocument jsonDocument;
     JsonArray logsJson = jsonDocument.to<JsonArray>();
 
     for (const auto& log : logs) {
-        if (logLevel == "ALL" || logLevel == Utility::logLevelToString(log.level)) {
+        const bool matchesLevel = logLevel == "ALL" || logLevel == Utility::logLevelToString(log.level);
+        const bool matchesMac = macFilter.length() == 0 || macFilter == String(log.sourceMac.c_str());
+
+        if (matchesLevel && matchesMac) {
             JsonObject logJson = logsJson.add<JsonObject>();
             logJson["level"] = Utility::logLevelToString(log.level);
             logJson["timestamp"] = log.timestamp;
             logJson["message"] = log.message;
+            logJson["mac"] = log.sourceMac;
         }
     }
 

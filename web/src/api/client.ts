@@ -16,6 +16,7 @@ export interface LogEntry {
   level: string;
   timestamp: string;
   message: string;
+  mac?: string;
 }
 
 export interface SensorFunction {
@@ -45,14 +46,22 @@ export async function fetchSensorValues(mac?: string): Promise<SensorValue[]> {
   return res.json();
 }
 
-export async function fetchLogs(level: LogLevel): Promise<LogEntry[]> {
-  const res = await fetch(`/logging/getLogs?level=${level}`);
+function buildLogsQuery(level: LogLevel, mac?: string): string {
+  const params = new URLSearchParams({ level });
+  if (mac) {
+    params.set("mac", mac);
+  }
+  return params.toString();
+}
+
+export async function fetchLogs(level: LogLevel, mac?: string): Promise<LogEntry[]> {
+  const res = await fetch(`/logging/getLogs?${buildLogsQuery(level, mac)}`);
   if (!res.ok) throw new Error("Failed to fetch logs");
   return res.json();
 }
 
-export async function fetchNewLogs(level: LogLevel): Promise<LogEntry[]> {
-  const res = await fetch(`/logging/getNewLogs?level=${level}`);
+export async function fetchNewLogs(level: LogLevel, mac?: string): Promise<LogEntry[]> {
+  const res = await fetch(`/logging/getNewLogs?${buildLogsQuery(level, mac)}`);
   if (!res.ok) throw new Error("Failed to fetch new logs");
   return res.json();
 }

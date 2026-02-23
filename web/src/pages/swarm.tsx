@@ -71,7 +71,7 @@ export default function SwarmPage() {
                 <TableHead>Uptime</TableHead>
                 <TableHead>Last Seen</TableHead>
                 <TableHead>Power</TableHead>
-                <TableHead class="w-[100px]">Actions</TableHead>
+                <TableHead class="w-[220px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -117,6 +117,19 @@ export default function SwarmPage() {
                         : "—"}
                     </TableCell>
                     <TableCell>
+                      <div class="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e: MouseEvent) => {
+                            e.stopPropagation();
+                            navigate(
+                              `/logging?mac=${encodeURIComponent(device.mac)}`,
+                            );
+                          }}
+                        >
+                          See logs
+                        </Button>
                       <Show when={device.online}>
                         <Button
                           variant="outline"
@@ -129,6 +142,7 @@ export default function SwarmPage() {
                           Locate
                         </Button>
                       </Show>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )}

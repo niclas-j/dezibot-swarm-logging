@@ -1,0 +1,171 @@
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.11.18)  23 FEB 2026 17:41
+entering extended mode
+ \write18 enabled.
+ %&-line parsing enabled.
+**TitlePageInfo.tex
+(./TitlePageInfo.tex
+LaTeX2e <2024-11-01> patch level 2
+L3 programming layer <2025-01-18>
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.2 \title[S
+            HORT-TITLE]{LONG-TITEL\\LONG-TITEL-SECONDLINE}
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+Missing character: There is no S ("53) in font nullfont!
+Missing character: There is no H ("48) in font nullfont!
+Missing character: There is no O ("4F) in font nullfont!
+Missing character: There is no R ("52) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no - ("2D) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no I ("49) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no L ("4C) in font nullfont!
+Missing character: There is no E ("45) in font nullfont!
+Missing character: There is no ] ("5D) in font nullfont!
+Missing character: There is no L ("4C) in font nullfont!
+Missing character: There is no O ("4F) in font nullfont!
+Missing character: There is no N ("4E) in font nullfont!
+Missing character: There is no G ("47) in font nullfont!
+Missing character: There is no - ("2D) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no I ("49) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no E ("45) in font nullfont!
+Missing character: There is no L ("4C) in font nullfont!
+Missing character: There is no L ("4C) in font nullfont!
+Missing character: There is no O ("4F) in font nullfont!
+Missing character: There is no N ("4E) in font nullfont!
+Missing character: There is no G ("47) in font nullfont!
+Missing character: There is no - ("2D) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no I ("49) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no E ("45) in font nullfont!
+Missing character: There is no L ("4C) in font nullfont!
+Missing character: There is no - ("2D) in font nullfont!
+Missing character: There is no S ("53) in font nullfont!
+Missing character: There is no E ("45) in font nullfont!
+Missing character: There is no C ("43) in font nullfont!
+Missing character: There is no O ("4F) in font nullfont!
+Missing character: There is no N ("4E) in font nullfont!
+Missing character: There is no D ("44) in font nullfont!
+Missing character: There is no L ("4C) in font nullfont!
+Missing character: There is no I ("49) in font nullfont!
+Missing character: There is no N ("4E) in font nullfont!
+Missing character: There is no E ("45) in font nullfont!
+! Undefined control sequence.
+l.3 \subtitle
+             [SHORT-SUBTITEL]{LONG-SUBTITEL}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+Missing character: There is no [ ("5B) in font nullfont!
+Missing character: There is no S ("53) in font nullfont!
+Missing character: There is no H ("48) in font nullfont!
+Missing character: There is no O ("4F) in font nullfont!
+Missing character: There is no R ("52) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no - ("2D) in font nullfont!
+Missing character: There is no S ("53) in font nullfont!
+Missing character: There is no U ("55) in font nullfont!
+Missing character: There is no B ("42) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no I ("49) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no E ("45) in font nullfont!
+Missing character: There is no L ("4C) in font nullfont!
+Missing character: There is no ] ("5D) in font nullfont!
+Missing character: There is no L ("4C) in font nullfont!
+Missing character: There is no O ("4F) in font nullfont!
+Missing character: There is no N ("4E) in font nullfont!
+Missing character: There is no G ("47) in font nullfont!
+Missing character: There is no - ("2D) in font nullfont!
+Missing character: There is no S ("53) in font nullfont!
+Missing character: There is no U ("55) in font nullfont!
+Missing character: There is no B ("42) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no I ("49) in font nullfont!
+Missing character: There is no T ("54) in font nullfont!
+Missing character: There is no E ("45) in font nullfont!
+Missing character: There is no L ("4C) in font nullfont!
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 2--9
+[] 
+ []
+
+! Undefined control sequence.
+l.11 \definecolor
+                 {mainColor}{RGB}{138, 194, 209}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.11 \definecolor{m
+                   ainColor}{RGB}{138, 194, 209}
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+Missing character: There is no m ("6D) in font nullfont!
+Missing character: There is no a ("61) in font nullfont!
+Missing character: There is no i ("69) in font nullfont!
+Missing character: There is no n ("6E) in font nullfont!
+Missing character: There is no C ("43) in font nullfont!
+Missing character: There is no o ("6F) in font nullfont!
+Missing character: There is no l ("6C) in font nullfont!
+Missing character: There is no o ("6F) in font nullfont!
+Missing character: There is no r ("72) in font nullfont!
+Missing character: There is no R ("52) in font nullfont!
+Missing character: There is no G ("47) in font nullfont!
+Missing character: There is no B ("42) in font nullfont!
+Missing character: There is no 1 ("31) in font nullfont!
+Missing character: There is no 3 ("33) in font nullfont!
+Missing character: There is no 8 ("38) in font nullfont!
+Missing character: There is no , ("2C) in font nullfont!
+Missing character: There is no 1 ("31) in font nullfont!
+Missing character: There is no 9 ("39) in font nullfont!
+Missing character: There is no 4 ("34) in font nullfont!
+Missing character: There is no , ("2C) in font nullfont!
+Missing character: There is no 2 ("32) in font nullfont!
+Missing character: There is no 0 ("30) in font nullfont!
+Missing character: There is no 9 ("39) in font nullfont!
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 11--12
+[]
+ []
+
+)
+! Emergency stop.
+<*> TitlePageInfo.tex
+                     
+*** (job aborted, no legal \end found)
+
+ 
+Here is how much of TeX's memory you used:
+ 16 strings out of 473832
+ 313 string characters out of 5729480
+ 386380 words of memory out of 5000000
+ 23183 multiletter control sequences out of 15000+600000
+ 558837 words of font info for 36 fonts, out of 8000000 for 9000
+ 1348 hyphenation exceptions out of 8191
+ 15i,0n,20p,118b,20s stack positions out of 10000i,1000n,20000p,200000b,200000s
+No pages of output.

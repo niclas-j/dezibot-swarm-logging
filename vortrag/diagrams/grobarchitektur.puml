@@ -1,0 +1,31 @@
+@startuml
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultTextAlignment center
+
+node "Sender Dezibot" as sender {
+  [Sensoren + Telemetrie-Task] as telemetry
+  [SenderTransport\n(ESP-NOW oder BLE)] as senderTransport
+  [Command Callback] as commandCallback
+}
+
+node "Empfaenger Dezibot" as receiver {
+  [ReceiverTransport\n(ESP-NOW + BLE)] as receiverTransport
+  [SenderMap\n(MAC -> SensorMessage)] as senderMap
+  [DebugServer\nHTTP API] as debugServer
+}
+
+cloud "Browser" as browser {
+  [Dashboard\nSwarm + Live Data] as dashboard
+}
+
+telemetry --> senderTransport
+senderTransport --> receiverTransport : SensorMessage
+receiverTransport --> senderMap : onTelemetry()
+senderMap --> debugServer
+
+dashboard --> debugServer : GET /getSwarmData\nGET /getEnabledSensorValues
+dashboard --> debugServer : POST /command/locate
+debugServer --> receiverTransport : sendCommand(mac, cmd)
+receiverTransport --> commandCallback : CommandMessage
+@enduml

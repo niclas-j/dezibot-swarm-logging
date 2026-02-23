@@ -23,7 +23,7 @@ private:
 
     void sendLogs() const;
     void sendNewLogs() const;
-    void processLogs(const std::vector<LogEntry::Entry>& logs, const String& logLevel) const;
+    void processLogs(const std::vector<LogEntry::Entry>& logs, const String& logLevel, const String& macFilter) const;
 
 public:
     explicit LoggingPage(WebServer* server);
