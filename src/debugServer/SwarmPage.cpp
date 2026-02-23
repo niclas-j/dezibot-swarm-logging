@@ -11,6 +11,10 @@ SwarmPage::SwarmPage(WebServer *server) : serverPointer(server)
                { getSwarmData(); });
     server->on("/command/locate", HTTP_POST, [this]()
                { locateDevice(); });
+    server->on("/command/forward", HTTP_POST, [this]()
+               { forwardDevice(); });
+    server->on("/command/stop", HTTP_POST, [this]()
+               { stopDevice(); });
 }
 
 void SwarmPage::handler()
@@ -66,6 +70,41 @@ void SwarmPage::locateDevice()
     }
 
     bool ok = sendCommandToDevice(macBytes, CMD_LOCATE);
+    if (ok)
+        serverPointer->send(200, "application/json", "{\"status\":\"sent\"}");
+    else
+        serverPointer->send(500, "application/json", "{\"error\":\"send failed\"}");
+}
+
+void SwarmPage::forwardDevice()
+{
+    sendCommand(CMD_FORWARD);
+}
+
+void SwarmPage::stopDevice()
+{
+    sendCommand(CMD_STOP);
+}
+
+void SwarmPage::sendCommand(uint8_t cmd)
+{
+    String mac = serverPointer->arg("mac");
+    if (mac.length() == 0)
+    {
+        serverPointer->send(400, "application/json", "{\"error\":\"missing mac parameter\"}");
+        return;
+    }
+
+    uint8_t macBytes[6];
+    if (sscanf(mac.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx",
+               &macBytes[0], &macBytes[1], &macBytes[2],
+               &macBytes[3], &macBytes[4], &macBytes[5]) != 6)
+    {
+        serverPointer->send(400, "application/json", "{\"error\":\"invalid mac format\"}");
+        return;
+    }
+
+    bool ok = sendCommandToDevice(macBytes, cmd);
     if (ok)
         serverPointer->send(200, "application/json", "{\"status\":\"sent\"}");
     else

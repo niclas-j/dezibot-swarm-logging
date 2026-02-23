@@ -7,6 +7,8 @@
 
 enum CommandType : uint8_t {
     CMD_LOCATE = 0x01,
+    CMD_FORWARD = 0x02,
+    CMD_STOP = 0x03,
 };
 
 typedef struct {

@@ -81,6 +81,24 @@ export async function locateDevice(mac: string): Promise<void> {
   if (!res.ok) throw new Error("Failed to send locate command");
 }
 
+export async function forwardDevice(mac: string): Promise<void> {
+  const res = await fetch("/command/forward", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `mac=${encodeURIComponent(mac)}`,
+  });
+  if (!res.ok) throw new Error("Failed to send forward command");
+}
+
+export async function stopDevice(mac: string): Promise<void> {
+  const res = await fetch("/command/stop", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `mac=${encodeURIComponent(mac)}`,
+  });
+  if (!res.ok) throw new Error("Failed to send stop command");
+}
+
 export async function toggleSensorFunction(
   sensorFunction: string,
   enabled: boolean,

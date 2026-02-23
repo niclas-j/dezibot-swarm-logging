@@ -117,6 +117,16 @@ void setup()
             Serial.println("LOCATE command received, blinking LEDs");
             dezibot.multiColorLight.blink(5, 0x00006400, ALL, 500);
             break;
+        case CMD_FORWARD:
+            Serial.println("FORWARD command received, starting motors");
+            Motion::left.setSpeed(4000);
+            Motion::right.setSpeed(4000);
+            break;
+        case CMD_STOP:
+            Serial.println("STOP command received, stopping motors");
+            Motion::left.setSpeed(0);
+            Motion::right.setSpeed(0);
+            break;
         default:
             Serial.printf("Unknown command: 0x%02X\n", cmd.command);
             break;

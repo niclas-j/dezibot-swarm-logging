@@ -1,7 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { useQuery } from "@tanstack/solid-query";
 import { For, Show } from "solid-js";
-import { fetchSwarmData, locateDevice } from "@/api/client";
+import { fetchSwarmData, locateDevice, forwardDevice, stopDevice } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,13 +43,33 @@ export default function SwarmPage() {
 
   const onlineCount = () => devices().filter((d) => d.online).length;
 
+  const onlineDevices = () => devices().filter((d) => d.online);
+
+  const handleForwardAll = () => {
+    onlineDevices().forEach((d) => forwardDevice(d.mac));
+  };
+
+  const handleStopAll = () => {
+    onlineDevices().forEach((d) => stopDevice(d.mac));
+  };
+
   return (
     <div class="max-w-4xl mx-auto space-y-4">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold">Swarm Devices</h1>
-        <span class="text-sm text-muted-foreground">
-          {devices().length} devices ({onlineCount()} online)
-        </span>
+        <div class="flex items-center gap-2">
+          <Show when={onlineCount() > 0}>
+            <Button variant="outline" size="sm" onClick={handleForwardAll}>
+              Forward All
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleStopAll}>
+              Stop All
+            </Button>
+          </Show>
+          <span class="text-sm text-muted-foreground">
+            {devices().length} devices ({onlineCount()} online)
+          </span>
+        </div>
       </div>
 
       <Show
@@ -140,6 +160,26 @@ export default function SwarmPage() {
                           }}
                         >
                           Locate
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e: MouseEvent) => {
+                            e.stopPropagation();
+                            forwardDevice(device.mac);
+                          }}
+                        >
+                          Forward
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e: MouseEvent) => {
+                            e.stopPropagation();
+                            stopDevice(device.mac);
+                          }}
+                        >
+                          Stop
                         </Button>
                       </Show>
                       </div>
