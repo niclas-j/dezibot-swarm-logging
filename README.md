@@ -48,7 +48,7 @@ Das Vorgängerprojekt [Dezibot Logging](https://github.com/Tim-Dietrich/dezibot-
 | **System-Metriken** | Freier Heap-Speicher, minimaler Heap-Watermark, Anzahl FreeRTOS-Tasks und Chip-Temperatur werden mitgestreamt |
 | **Geschätzte Leistungsaufnahme** | Softwarebasierte Schätzung des aktuellen Stromverbrauchs basierend auf Komponentenzuständen (Motoren, CPU, WiFi) (Nur Demo-Feature, nicht zuverlässig) |
 | **Hintergrund-Telemetrie** | Telemetrie läuft in eigenem FreeRTOS-Task — Roboter-Logik in `loop()` blockiert nicht mehr das Senden von Sensordaten |
-| **Modernes Frontend** | Kompletter Neubau des Frontends zum besseren Monitorings mehrerer Dezibots |
+| **Modernes Frontend** | Kompletter Neubau des Frontends zum besseren Monitorings mehrerer Dezibots mit weniger Speicherverbrauch |
 
 ---
 
@@ -608,15 +608,15 @@ Aktivierung und Deaktivierung einzelner Sensorfunktionen auf dem lokalen Empfän
 
 ### BLE Verbindungslimit
 
-Der ESP32-S3 unterstützt ca. 3–9 gleichzeitige BLE-Verbindungen (konfigurationsabhängig). Große Schwärme können dieses Limit erreichen. ESP-NOW hat diese Einschränkung nicht (Broadcast-basiert). In gemischten Setups empfiehlt sich ESP-NOW für die Mehrzahl der Sender und BLE nur für einzelne Test-Dezibots.
+Der ESP32-S3 unterstützt ca. 7–9 gleichzeitige BLE-Verbindungen (konfigurationsabhängig). Für große Schwärme müsste ein BLE Mesh aufgebaut werden, dies ist nicht implementiert. ESP-NOW hat diese Einschränkung nicht (Broadcast-basiert). In gemischten Setups empfiehlt es sich mit dem aktuellen ProjektstandESP-NOW für die Mehrzahl der Sender und BLE nur für einzelne Test-Dezibots.
 
 ### BLE Verbindungsaufbau
 
 Der BLE-Empfänger scannt alle 10 Sekunden nach neuen Dezibots. Zwischen dem Einschalten eines BLE-Senders und dem Erscheinen im Dashboard können bis zu ~15 Sekunden vergehen (Scan-Intervall + Verbindungsaufbau + Service Discovery). ESP-NOW-Sender erscheinen sofort nach dem ersten Broadcast.
 
-### WiFi-Kanal
+### Übertragungs-Kanal
 
-Sender und Empfänger müssen auf dem gleichen WiFi-Kanal arbeiten. Der Sender setzt Kanal 1 explizit (`esp_wifi_set_channel`). Der Empfänger betreibt einen SoftAP, dessen Kanal standardmäßig 1 ist. Bei Problemen muss der Kanal manuell abgeglichen werden.
+Sender und Empfänger müssen auf dem gleichen Übertragungs-Kanal arbeiten. Der Sender setzt Kanal 1 explizit (`esp_wifi_set_channel`). Der Empfänger betreibt einen SoftAP, dessen Kanal standardmäßig 1 ist. Bei Problemen muss der Kanal manuell abgeglichen werden.
 
 ### Locate-Befehl blockiert
 
