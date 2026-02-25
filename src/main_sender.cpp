@@ -2,18 +2,52 @@
 #include <Dezibot.h>
 #include <esp_system.h>
 #include <driver/temp_sensor.h>
+#include <freertos/queue.h>
 #include <shared/SensorMessage.h>
 #include <shared/CommandMessage.h>
 #include <transport/SenderTransport.h>
 #include <transport/EspNowSenderTransport.h>
 #include <transport/BleSenderTransport.h>
 
-#define TRANSPORT_PROTOCOL "bluetooth" // "esp_now" or "bluetooth"
+#define TRANSPORT_PROTOCOL "esp_now" // "esp_now" or "bluetooth"
 
 Dezibot dezibot;
 
 static SenderTransport *transport = nullptr;
 static uint32_t counter = 0;
+static QueueHandle_t commandQueue = nullptr;
+
+static void commandTask(void *param)
+{
+    CommandMessage cmd;
+
+    while (true)
+    {
+        if (xQueueReceive(commandQueue, &cmd, portMAX_DELAY) != pdTRUE)
+            continue;
+
+        switch (cmd.command)
+        {
+        case CMD_LOCATE:
+            Serial.println("LOCATE command received, blinking LEDs");
+            dezibot.multiColorLight.blink(5, 0x00006400, ALL, 500);
+            break;
+        case CMD_FORWARD:
+            Serial.println("FORWARD command received, starting motors");
+            Motion::left.setSpeed(4000);
+            Motion::right.setSpeed(4000);
+            break;
+        case CMD_STOP:
+            Serial.println("STOP command received, stopping motors");
+            Motion::left.setSpeed(0);
+            Motion::right.setSpeed(0);
+            break;
+        default:
+            Serial.printf("Unknown command: 0x%02X\n", cmd.command);
+            break;
+        }
+    }
+}
 
 static uint16_t estimatePowerMw(const SensorMessage &m)
 {
@@ -107,30 +141,21 @@ void setup()
     else
         transport = new EspNowSenderTransport();
 
+    commandQueue = xQueueCreate(8, sizeof(CommandMessage));
+    if (!commandQueue)
+    {
+        Serial.println("Command queue init failed");
+        return;
+    }
+
+    xTaskCreatePinnedToCore(commandTask, "command", 4096, NULL, 4, NULL, 0);
+
     Serial.println("Setup: transport created, setting callback...");
 
     transport->setCommandCallback([](const CommandMessage &cmd)
                                   {
-        switch (cmd.command)
-        {
-        case CMD_LOCATE:
-            Serial.println("LOCATE command received, blinking LEDs");
-            dezibot.multiColorLight.blink(5, 0x00006400, ALL, 500);
-            break;
-        case CMD_FORWARD:
-            Serial.println("FORWARD command received, starting motors");
-            Motion::left.setSpeed(4000);
-            Motion::right.setSpeed(4000);
-            break;
-        case CMD_STOP:
-            Serial.println("STOP command received, stopping motors");
-            Motion::left.setSpeed(0);
-            Motion::right.setSpeed(0);
-            break;
-        default:
-            Serial.printf("Unknown command: 0x%02X\n", cmd.command);
-            break;
-        } });
+        if (xQueueSend(commandQueue, &cmd, 0) != pdTRUE)
+            Serial.printf("Command queue full, dropping 0x%02X\n", cmd.command); });
 
     Serial.println("Setup: calling transport->begin()...");
 

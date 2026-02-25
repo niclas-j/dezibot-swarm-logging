@@ -99,18 +99,22 @@ export default function LoggingPage() {
     return [ALL_SENDERS, ...Array.from(senders).sort((a, b) => a.localeCompare(b))];
   };
 
-  createEffect(() => {
-    const macParam = searchParams.mac;
-    const nextSender =
-      typeof macParam === "string" && macParam.length > 0
-        ? macParam
-        : ALL_SENDERS;
+  createEffect(
+    on(
+      () => searchParams.mac,
+      (macParam) => {
+        const nextSender =
+          typeof macParam === "string" && macParam.length > 0
+            ? macParam
+            : ALL_SENDERS;
 
-    if (nextSender !== sender()) {
-      setSender(nextSender);
-      setAllLogs([]);
-    }
-  });
+        if (nextSender !== sender()) {
+          setSender(nextSender);
+          setAllLogs([]);
+        }
+      },
+    ),
+  );
 
   const initialQuery = useQuery(() => ({
     queryKey: ["logs", level(), sender()],
@@ -162,15 +166,28 @@ export default function LoggingPage() {
       return;
     }
 
+    if (value === sender()) {
+      return;
+    }
+
+    const currentMac =
+      typeof searchParams.mac === "string" && searchParams.mac.length > 0
+        ? searchParams.mac
+        : undefined;
+
     setSender(value);
     setAllLogs([]);
 
     if (value === ALL_SENDERS) {
-      navigate("/logging", { replace: true });
+      if (currentMac) {
+        navigate("/logging", { replace: true });
+      }
       return;
     }
 
-    navigate(`/logging?mac=${encodeURIComponent(value)}`, { replace: true });
+    if (currentMac !== value) {
+      navigate(`/logging?mac=${encodeURIComponent(value)}`, { replace: true });
+    }
   }
 
   async function handleExportCsv() {
