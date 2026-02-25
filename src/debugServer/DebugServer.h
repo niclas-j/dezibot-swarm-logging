@@ -1,9 +1,9 @@
 /**
  * @file DebugServer.h
- * @author Tim Dietrich, Felix Herrling
+ * @author Tim Dietrich, Felix Herrling, Niclas Jost, Marius Busalt
  * @brief This component implements a webserver for debugging purposes.
- * @version 1.0
- * @date 2025-03-23
+ * @version 2.0
+ * @date 2026-02
  *
  * @copyright Copyright (c) 2025
  *
@@ -15,6 +15,7 @@
 #include "LoggingPage.h"
 #include "LiveDataPage.h"
 #include "SettingsPage.h"
+#include "SwarmPage.h"
 #include "Sensor.h"
 
 class DebugServer {
@@ -24,6 +25,7 @@ private:
     LoggingPage* loggingPage;
     LiveDataPage* liveDataPage;
     SettingsPage* settingsPage;
+    SwarmPage* swarmPage;
     bool serverActive = true;
 
     /**

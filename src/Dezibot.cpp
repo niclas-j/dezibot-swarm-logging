@@ -10,6 +10,7 @@
 Dezibot::Dezibot(){};
 
 void Dezibot::begin(void) {
+    Serial.begin(115200);
     Wire.begin(SDA_PIN,SCL_PIN);
     // Start the timer for logging purposes
     Logger::getInstance().startTimer();

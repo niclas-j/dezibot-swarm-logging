@@ -1,0 +1,250 @@
+%!TeX engine = xelatex
+\def\BeamerAspectRatio{43}
+
+\documentclass[aspectratio=\BeamerAspectRatio]{beamer}
+
+\usepackage{Packages}
+
+\import{./}{TitlePageInfo.tex}
+\title[Dezibot Swarm Logging]{Dezibot Swarm Logging \\ \& Monitoring}
+\subtitle[Projektvortrag]{Vom Einzelbot-Debugging zur Schwarmplattform}
+\author{Projektteam Dezibot: Niclas Jost, Tim Dietrich, Felix Herrling}
+\renewcommand{\faculty}{Fakult\"at Informatik und Medien}
+\date{Projektpr\"asentation, Februar 2026}
+
+\begin{document}
+\setcounter{tocdepth}{1}
+\maketitlepage
+\maketableofcontents
+
+\section{Motivation}
+
+\subsection{Was war vorher}
+\begin{frame}{Ausgangslage vor diesem Projekt}
+\begin{itemize}
+    \item Der bestehende Debug-Server zeigte nur die Sensordaten eines einzelnen Dezibots.
+    \item Monitoring mehrerer Bots bedeutete: manuell zwischen mehreren WLANs wechseln.
+    \item Keine zentrale Ubersicht, keine gemeinsame Historie, keine Fernsteuerung.
+    \item Fokus lag auf lokaler Diagnose statt auf koordiniertem Schwarmbetrieb.
+\end{itemize}
+\end{frame}
+
+\subsection{Warum wollten wir das machen}
+\begin{frame}{Warum wir gestartet sind}
+	\begin{itemize}
+		\item Ein Schwarm aus Lernrobotern braucht eine gemeinsame Sicht auf Zustand und Verhalten.
+		\item In Praktika und Demos muss man schnell sehen: Wer ist online, wer sendet, wer reagiert.
+		\item Wir wollten Diagnostik und Steuerung zusammenfuhren statt getrennte Werkzeuge zu nutzen.
+		\item Das Projekt sollte zugleich Hardware-Kommunikation und moderne Webentwicklung verbinden.
+	\end{itemize}
+\end{frame}
+
+\subsection{Was waren unsere Ziele}
+\begin{frame}{Projektziele}
+	\begin{itemize}
+		\item Zentrale Swarm-Ubersicht mit Live-Status aller verbundenen Dezibots.
+		\item Bidirektionale Kommunikation: Telemetrie empfangen und Kommandos zurucksenden.
+		\item Zwei Transportwege unter einer Abstraktion: ESP-NOW und Bluetooth Low Energy.
+		\item Moderne, wartbare Frontend-Toolchain mit Build-Ausgabe fur den ESP32.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Projektverlauf aus der Git-History}
+	\small
+	\begin{tabularx}{\textwidth}{l X}
+		01/2025 & PlatformIO-Setup, Grundgerust und erste CI-Integration            \\
+		03/2025 & Webserver, Logging, dynamische Seiten und Stabilisierung          \\
+		02/2026 & \texttt{068fd41}: Sensor-Streaming Sender $\rightarrow$ Empfanger \\
+		02/2026 & \texttt{d683d5c}: Umstieg auf Vite/SolidJS Frontend               \\
+		02/2026 & \texttt{5c1bc86}: Bidirektionale Kommandos (Locate)               \\
+		02/2026 & \texttt{d7e68f1}: asynchrone Telemetrie + Power-Schatzung         \\
+		02/2026 & \texttt{418f02d}: Adapter-Pattern mit ESP-NOW und BLE             \\
+		02/2026 & \texttt{075222a}: technische Gesamtdokumentation                  \\
+	\end{tabularx}
+	\vspace{0.6em}
+	\begin{itemize}
+		\item Insgesamt 122 Commits: klare Entwicklung von Einzelbot-Features zur Schwarmplattform.
+	\end{itemize}
+\end{frame}
+
+\section{Grundlegende Architektur}
+
+\subsection{Plantuml Grobarchitektur}
+\begin{frame}[fragile]{PlantUML Grobarchitektur (Systemkontext)}
+\small
+\begin{verbatim}
+@startuml
+node "Sender Dezibot" as S
+node "Empfaenger Dezibot" as R
+cloud "Browser" as B
+S --> R : SensorMessage (ESP-NOW oder BLE)
+B --> R : HTTP/JSON + POST /command/locate
+R --> S : CommandMessage (Unicast oder GATT Write)
+@enduml
+\end{verbatim}
+\end{frame}
+
+\subsection{Plantuml Klassendiagramm}
+\begin{frame}[fragile]{PlantUML Klassendiagramm (Transport-Layer)}
+\small
+\begin{verbatim}
+@startuml
+abstract class SenderTransport
+abstract class ReceiverTransport
+SenderTransport <|-- EspNowSenderTransport
+SenderTransport <|-- BleSenderTransport
+ReceiverTransport <|-- EspNowReceiverTransport
+ReceiverTransport <|-- BleReceiverTransport
+@enduml
+\end{verbatim}
+\end{frame}
+
+\subsection{Dev Experience mit Platform IO}
+\begin{frame}{Dev Experience mit PlatformIO}
+	\begin{itemize}
+		\item Einheitliche Build-Umgebung fur Sender und Empfanger als getrennte Environments.
+		\item Reproduzierbarer Ablauf: \texttt{pio run}, \texttt{upload}, \texttt{uploadfs}, \texttt{device monitor}.
+		\item Frontend-Artefakte landen in \texttt{data/} und werden via SPIFFS auf den Empfanger geladen.
+		\item Hardware-nahe Entwicklung und Web-Build sind damit in einer Pipeline kombinierbar.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Build- und Flash-Workflow}
+	\small
+	\begin{verbatim}
+cd web
+npm install
+npm run build
+
+pio run -e esp32s3_receiver -t uploadfs
+pio run -e esp32s3_receiver -t upload
+pio run -e esp32s3_sender -t upload
+\end{verbatim}
+	\begin{itemize}
+		\item Ein Build erzeugt sofort testbare Firmware und die passende Weboberflache.
+	\end{itemize}
+\end{frame}
+
+\section{Funktionen}
+
+\subsection{Ubersicht verbundener Dezibots}
+\begin{frame}{Swarm-Ubersicht im Dashboard}
+	\begin{itemize}
+		\item Pro Bot sichtbar: Online/Offline, MAC, Message Counter, Uptime, Last Seen, Power.
+		\item Online-Status basiert auf \texttt{lastSeen} mit Timeout-Logik fur schnelle Diagnose.
+		\item Klick auf einen Bot fuhrt direkt in die Live-Sensoransicht fur dieses Geraet.
+		\item Locate-Action ist in derselben Tabelle integriert und ohne Kontextwechsel nutzbar.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Logging}
+	\begin{itemize}
+		\item Eigene Logging-Seite mit Filterung nach Level (ALL, INFO, WARNING, ERROR, DEBUG, TRACE).
+		\item Polling-basierter Nachlade-Mechanismus fur neue Eintrage in nahezu Echtzeit.
+		\item Ringpuffer im Backend verhindert unkontrolliertes Speicherwachstum.
+		\item Hilft bei Integrationstests zwischen Firmware, Transport und Web-UI.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Charts mit Live-Sensordaten}
+\begin{itemize}
+    \item Pro Sensorwert ein eigenes Echtzeit-Liniendiagramm (Chart.js im SolidJS-Frontend).
+    \item Anzeige umfasst Sensordaten und Systemmetriken wie Heap, Taskzahl, Chip-Temperatur.
+    \item Zeitfenster ist konfigurierbar (50 bis 2000 Datenpunkte) fur Debugging und Demo.
+    \item Fokus auf Lesbarkeit bei mehreren Bots statt auf historische Langzeitarchivierung.
+    \item Datenexport als CSV/JSON ist als nachster Ausbauschritt in der Roadmap vorgesehen.
+\end{itemize}
+\end{frame}
+
+\subsection{Bidirektionale Kommunikation}
+\begin{frame}{ESP-NOW: Telemetrie und Kommandos}
+	\begin{itemize}
+		\item Sender broadcastet \texttt{SensorMessage} im Sekundentakt, Empfanger sammelt zentral.
+		\item Kommandos gehen als Unicast zuruck an ein konkretes Geraet.
+		\item \texttt{Magic Numbers} trennen Sensor- und Kommando-Pakete robust.
+		\item Beispielbefehl \texttt{CMD\_LOCATE}: Bot blinkt 5 mal grun zur schnellen Lokalisierung.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Bluetooth (BLE GATT)}
+\begin{itemize}
+    \item Sender als Peripheral/GATT-Server, Empfanger als Central/GATT-Client.
+    \item Sensordaten kommen per Notification, Kommandos per Write-Characteristic.
+    \item Ermoglicht gemischte Setups mit ESP-NOW und BLE innerhalb derselben Plattform.
+    \item Besonders nutzlich fur Testszenarien, in denen BLE-Interoperabilitat wichtig ist.
+\end{itemize}
+\end{frame}
+
+\subsection{Web-Technologien Build Chain auf Dezibot}
+\begin{frame}{SolidJS Build Chain auf dem Dezibot}
+	\begin{itemize}
+		\item Modernes Frontend mit SolidJS, Router, TanStack Query und Chart.js.
+		\item Build via Vite erzeugt statische Assets, die in \texttt{data/} fur SPIFFS landen.
+		\item Der Empfanger liefert die SPA direkt aus dem Flash des ESP32 aus.
+		\item Ergebnis: saubere Trennung zwischen Firmware-Logik und Web-UI mit klaren APIs.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Deutliche Bundle-Verkleinerung}
+	\begin{itemize}
+		\item Vor Umstieg: \texttt{canvasjs.min.js} allein bei 507441 Bytes.
+		\item Nach Vite-Migration (Commit \texttt{d683d5c}): Hauptbundle bei 384203 Bytes.
+		\item Aktueller Stand im Repository: \texttt{data/assets/index-wh5Esc8v.js} ca. 376 KB.
+		\item Effekt: rund 24 bis 26 Prozent weniger JavaScript gegenuber der alten Basis.
+	\end{itemize}
+\end{frame}
+
+\section{Probleme}
+
+\begin{frame}{Technische Herausforderungen im Betrieb}
+	\begin{itemize}
+		\item BLE-Skalierung: gleichzeitige Verbindungen auf ESP32-S3 sind begrenzt.
+		\item BLE-Onboarding: Scan- und Verbindungsaufbau verursachen spurbare Verzogerung.
+		\item Kanalabhangigkeit bei ESP-NOW: Sender und Empfanger mussen denselben Kanal nutzen.
+		\item Blockierender Locate-Handler kann den Empfangspfad fur einige Sekunden storen.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Qualitat und Grenzen der Messwerte}
+	\begin{itemize}
+		\item Power-Wert ist bewusst eine Schatzung und keine elektrische Messung.
+		\item Chip-Temperatur ist intern und nur begrenzt als Umgebungsindikator nutzbar.
+		\item Thread-Safety in Teilen des Logging-Zugriffs bleibt ein technischer Schuldenpunkt.
+		\item Diese Punkte sind dokumentiert und priorisiert fur die nachsten Iterationen.
+	\end{itemize}
+\end{frame}
+
+\section{Ausblick}
+
+\begin{frame}{Roadmap}
+	\begin{itemize}
+		\item Sensor-Export als CSV/JSON fur Analyse in Python oder Tabellenkalkulation.
+		\item Device Naming fur besser lesbare Bot-Identifikation statt reiner MAC-Adressen.
+		\item Erweiterte Remote-Commands fur Motoren, LEDs und gruppierte Aktionen.
+		\item Alerting bei Schwellwerten, z. B. Heap, Temperatur oder Verbindungsverlust.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Fazit}
+	\begin{itemize}
+		\item Wir haben aus einem Einzelbot-Debugging eine zentrale Schwarmplattform entwickelt.
+		\item Architektur und Toolchain sind so aufgebaut, dass weitere Protokolle und Features anschlussfahig sind.
+		\item Der Mehrwert liegt in der Kombination aus Live-Monitoring, Kommandokanal und reproduzierbarer Dev-Experience.
+	\end{itemize}
+	\vspace{0.8em}
+	\centering
+	\Large Fragen?
+\end{frame}
+
+\begin{frame}{Quellen und Referenzen}
+	\small
+	\begin{itemize}
+		\item Projekt-Repository und Commit-Historie: \url{https://github.com/dezibot/dezibot-swarm-logging}
+		\item Dezibot Logging Vorgangerprojekt: \url{https://github.com/Tim-Dietrich/dezibot-logging}
+		\item Dezibot4 Bibliothek: \url{https://github.com/dezibot/dezibot}
+		\item ESP-NOW Dokumentation (Espressif): \url{https://docs.espressif.com/}
+		\item PlatformIO, SolidJS, Vite, Chart.js Projektdokumentationen
+	\end{itemize}
+\end{frame}
+
+\end{document}

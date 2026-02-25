@@ -1,12 +1,12 @@
 /**
  * @file Sensor.h
- * @author Tim Dietrich, Felix Herrling
+ * @author Tim Dietrich, Felix Herrling, Niclas Jost, Marius Busalt
  * @brief This component implements sensors as objects.
- * Each Sensor object has a name, a class name and a list of SensorFunction objects.
- * This is utilized to dynamically add sensors and their functions to the debug server.
- * Webpages for Settings and LiveData are generated based on the Sensor objects.
- * @version 1.0
- * @date 2025-03-23
+ *        Each Sensor object has a name, a class name and a list of SensorFunction objects.
+ *        This is utilized to dynamically add sensors and their functions to the debug server.
+ *        Webpages for Settings and LiveData are generated based on the Sensor objects.
+ * @version 2.0
+ * @date 2026-02
  *
  * @copyright Copyright (c) 2025
  *

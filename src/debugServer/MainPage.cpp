@@ -14,13 +14,5 @@
 MainPage::MainPage(WebServer* server):serverPointer(server) {}
 
 void MainPage::handler() {
-    serveFileFromSpiffs(serverPointer, "/mainPage.html", "text/html");
+    serveFileFromSpiffs(serverPointer, "/index.html", "text/html");
 };
-
-void MainPage::cssHandler() {
-    serveFileFromSpiffs(serverPointer, "/css/mainPageStyle.css", "text/css");
-}
-
-void MainPage::errorPageHandler() {
-    serveFileFromSpiffs(serverPointer, "/errorPage.html", "text/html");
-}

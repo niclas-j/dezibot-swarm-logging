@@ -33,31 +33,31 @@ public:
      * @brief Logs an informational message.
      * @param message The message to be logged.
      */
-    void logInfo(const std::string& message) const;
+    void logInfo(const std::string& message, const std::string& sourceMac = "") const;
 
     /**
      * @brief Logs a warning message.
      * @param message The warning message to be logged.
      */
-    void logWarning(const std::string& message) const;
+    void logWarning(const std::string& message, const std::string& sourceMac = "") const;
 
     /**
      * @brief Logs an error message.
      * @param message The error message to be logged.
      */
-    void logError(const std::string& message) const;
+    void logError(const std::string& message, const std::string& sourceMac = "") const;
 
     /**
      * @brief Logs a debug message.
      * @param message The debug message to be logged.
      */
-    void logDebug(const std::string& message) const;
+    void logDebug(const std::string& message, const std::string& sourceMac = "") const;
 
     /**
      * @brief Logs a trace message.
      * @param message The trace message to be logged.
      */
-    void logTrace(const std::string& message) const;
+    void logTrace(const std::string& message, const std::string& sourceMac = "") const;
 
     /**
      * @brief Enables or disables logging globally.
@@ -81,7 +81,7 @@ private:
      * @param level The severity level of the log entry.
      * @param message The message to be logged.
      */
-    void log(LogEntry::Level level, const std::string& message) const;
+    void log(LogEntry::Level level, const std::string& message, const std::string& sourceMac) const;
 
     // Delete copy constructor and assignment operator to prevent copying
     Logger(const Logger&) = delete;

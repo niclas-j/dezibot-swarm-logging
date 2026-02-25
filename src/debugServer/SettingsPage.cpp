@@ -15,36 +15,23 @@
 extern Dezibot dezibot;
 
 SettingsPage::SettingsPage(WebServer* server):serverPointer(server) {
-    // Endpoint for receiving JSON representation of sensors and their states
     serverPointer->on("/settings/getSensorData", [this]() {
         sendSensorData();
     });
 
-    // Endpoint for toggling sensor functions
     serverPointer->on("/settings/toggleFunction", HTTP_POST, [this]() {
         toggleSensorFunction();
     });
 }
 
-// send the html content of the SettingsPage
 void SettingsPage::handler() {
-    serveFileFromSpiffs(serverPointer, "/settingsPage.html", "text/html");
+    serveFileFromSpiffs(serverPointer, "/index.html", "text/html");
 };
 
-void SettingsPage::jsHandler() {
-    serveFileFromSpiffs(serverPointer, "/js/settingsPageScript.js", "text/javascript");
-}
-
-void SettingsPage::cssHandler() {
-    serveFileFromSpiffs(serverPointer, "/css/settingsPageStyle.css", "text/css");
-}
-
-// send the JSON representation of sensors and their states
 void SettingsPage::sendSensorData() const {
     JsonDocument jsonDocument;
     JsonArray sensorsJson = jsonDocument.to<JsonArray>();
 
-    // iterate over sensors and their functions, add them to the JSON document
     auto& sensors = dezibot.debugServer.getSensors();
     for (auto& sensor : sensors) {
         JsonObject sensorJson = sensorsJson.add<JsonObject>();
@@ -58,21 +45,17 @@ void SettingsPage::sendSensorData() const {
         }
     }
 
-    // send the JSON response
     String jsonResponse;
     serializeJson(jsonDocument, jsonResponse);
     serverPointer->send(200, "application/json", jsonResponse);
 }
 
-// receive json from the client, check if the sensor function exists and toggle its state
 void SettingsPage::toggleSensorFunction() {
-    // error handling, check if the request contains the required data
     if (!serverPointer->hasArg("plain")) {
         serverPointer->send(400, "application/json", R"({"error":"No data provided"})");
         return;
     }
 
-    // check if the JSON is valid and parse it
     JsonDocument json;
     DeserializationError error = deserializeJson(json, serverPointer->arg("plain"));
     if (error) {
@@ -80,12 +63,10 @@ void SettingsPage::toggleSensorFunction() {
         return;
     }
 
-    // check if the JSON contains the required keys
     if (json["sensorFunction"].is<String>() && json["enabled"].is<bool>()) {
         String functionName = json["sensorFunction"].as<String>();
         bool isEnabled = json["enabled"].as<bool>();
 
-        // Iterate over sensors and update sensorfunction state
         for (auto& sensor : dezibot.debugServer.getSensors()) {
             for (auto& sensorFunction : sensor.getSensorFunctions()) {
                 if (sensorFunction.getFunctionName() == functionName.c_str()) {

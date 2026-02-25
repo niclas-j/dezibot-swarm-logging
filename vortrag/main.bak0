@@ -1,0 +1,31 @@
+%!TeX engine = xelatex
+%------------- Defines the beamer size ------------------------
+\def\BeamerAspectRatio{43} % Default slide size ratio 16:9
+
+%--------------- Defines beamer document ----------------------
+\documentclass[aspectratio=\BeamerAspectRatio]{beamer}
+
+\usepackage{Packages}
+
+\import{./}{TitlePageInfo.tex}
+\addbibresource{references.bib}
+
+%-------------- Start documents -------------------------------
+\begin{document}
+\maketitlepage %% This is to create title page. The data are taken from TitlePageInfo.tex
+\maketableofcontents %% This is to make table of contents/ overview slide after title page
+%\makesubsectionpopup %% This will show table of content slides before move to each subsection
+\makesectionpopup %% This will show section name slide before move to each section
+
+\import{slides/}{Introduction.tex}
+\import{slides/}{Motivation.tex}
+\import{slides/}{Notes.tex}
+\import{slides/}{CitationExample.tex}
+\import{slides/}{AlertNoteExample.tex}
+\import{slides/}{TableExample.tex}
+\import{slides/}{Summary.tex}
+\import{slides/}{Acknowledgement.tex}
+\import{slides/}{disclaimer.tex}
+
+\import{./slides}{/citations/citations.tex}
+\end{document}

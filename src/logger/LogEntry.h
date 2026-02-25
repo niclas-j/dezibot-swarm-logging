@@ -28,6 +28,7 @@ namespace LogEntry {
         Level level;
         std::string timestamp;
         std::string message;
+        std::string sourceMac;
     };
 }
 

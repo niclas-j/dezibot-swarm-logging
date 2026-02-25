@@ -21,24 +21,9 @@ private:
     WebServer* serverPointer;
 public:
     explicit LiveDataPage(WebServer* server);
-
-    /**
-     * @brief provides html on initial request from client
-     * @return void
-     */
     void handler() override;
-    void canvasjsHandler();
-
-    void jsHandler();
-
-    void cssHandler();
-
-
-    /**
-     * @brief Read current values from enabled sensors, format them as json and send to client.
-     * @return void
-     */
     void getEnabledSensorValues();
+    void getRemoteSensorValues(const String &mac);
 };
 
 #endif //LIVEDATAPAGE_H

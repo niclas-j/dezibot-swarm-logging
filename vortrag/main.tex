@@ -1,0 +1,200 @@
+% !TeX program = xelatex
+\def\BeamerAspectRatio{43}
+
+\documentclass[aspectratio=\BeamerAspectRatio]{beamer}
+
+\usepackage{Packages}
+
+\import{./}{TitlePageInfo.tex}
+\title[Dezibot Schwarm Logging]{Dezibot Schwarm Logging \\ \& Monitoring}
+\subtitle[Projektvortrag]{Vom Einzelbot-Debugging zur Schwarmplattform}
+\author{Projektteam Dezibot: Niclas Jost, Marius Busalt}
+\renewcommand{\faculty}{Fakult\"at Informatik und Medien}
+\date{Projektpr\"asentation, Februar 2026}
+
+\begin{document}
+\setcounter{tocdepth}{1}
+\maketitlepage
+\maketableofcontents
+
+% 1-5 Marius
+% 6-10 Niclas
+% 11,12,13,14 Marius
+% 15 - Rest
+
+\section{Motivation}
+
+\subsection{Stand Vorgängerprojekt}
+% 
+\begin{frame}{Ausgangslage vor diesem Projekt}
+	\begin{itemize}
+		\item Debug-Server zeigte nur die Sensordaten des Webserver-Host Dezibots
+		\item Es gab nur Diagnose eines einzelnen Dezibots
+		\item Keine Kommunikation zu anderen Dezibots implementiert
+		\item Großes Webbundle
+	\end{itemize}
+\end{frame}
+
+\subsection{Motivation}
+\begin{frame}{Ursprüngliche Verbesserungsideen}
+	\begin{itemize}
+		\item Überwachung einer Dezibotgruppe bzw. Schwarm
+		\item Schnelle Übersicht über Schwarm: Wer ist online, wer sendet, Logs einsehen
+		\item Fokus auf Diagnostik, ausgelesene Sensordaten einsehbar und spezifische Logs verfügbar machen
+		\item Identifizierung von Dezibots ermöglichen, um Daten leichter zuordnen zu können
+	\end{itemize}
+\end{frame}
+
+\subsection{Was waren unsere Ziele}
+\begin{frame}{Projektziele}
+	\begin{itemize}
+		\item Zentrale Schwarm-Übersicht aller verbundenen Dezibots über Masterdezibot
+		\item Telemetrie und Logs einzelner Dezibots verfügbar machen
+		\item Bidirektionale Kommunikation: Masterdezibot soll Telemetrie empfangen und Kommandos zurücksenden
+		\item Kommunikationsprotokoll-Agnostisch
+		\item Echtzeitverfügbarkeit durch entkoppeltes Telemetriemanagment
+		\item Verbesserte UI passend zu neuen Funktionen, Speicherverbrauch reduzieren
+		\item Logging für größere Schwärme ermöglichen
+	\end{itemize}
+\end{frame}
+
+\section{Architektur}
+
+\subsection{Plantuml Grobarchitektur}
+\begin{frame}{PlantUML Grobarchitektur (Systemkontext)}
+	\centering
+	\includegraphics[width=\textwidth,height=0.75\textheight,keepaspectratio]{imglib/diagrams/grobarchitektur.png}
+\end{frame}
+
+\subsection{Plantuml Klassendiagramm}
+\begin{frame}{PlantUML Klassendiagramm (Transport-Layer)}
+	\centering
+	\includegraphics[width=\textwidth,height=0.75\textheight,keepaspectratio]{imglib/diagrams/klassendiagramm.png}
+\end{frame}
+
+
+\begin{frame}[fragile]{Build- und Flash-Workflow}
+	\begin{itemize}
+		\item Einheitliche Build-Umgebung für Sender und Empfanger,  gesamte Config in platform.ini einsehbar
+		\item Frontend-Artefakte können optional in \texttt{data/} gebaut und per SPIFFS hochgeladen werden.
+	\end{itemize}
+	\begin{verbatim}
+
+cd web
+npm install
+npm run build
+
+pio run -e esp32s3_receiver -t uploadfs
+pio run -e esp32s3_receiver -t upload
+pio run -e esp32s3_sender -t upload
+\end{verbatim}
+
+\end{frame}
+
+\section{Funktionen}
+
+\subsection{Übersicht verbundener Dezibots}
+\begin{frame}{Schwarm-Übersicht im Dashboard}
+	\begin{itemize}
+		\item Je Bot sichtbar: Online/Offline, MAC, Message Counter, Uptime, Last Seen
+		\item Klick auf einen Bot führt direkt in die Live-Sensoransicht für diesen Dezibot
+		\item Senden von Commands durch verschiedene Buttons
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Charts mit Live-Sensordaten}
+	\begin{itemize}
+		\item Pro Sensorwert ein eigenes Echtzeit-Diagram
+		\item Anzeige umfasst Sensordaten und Systemmetriken wie Heapinfo oder Chip-Temperatur
+		\item Anzahl der Datenpunkte ist konfigurierbar
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Logging}
+	\begin{itemize}
+		\item Eigene Logging-Seite mit Filterung nach Level (ALL, INFO, WARNING, ERROR, DEBUG, TRACE)
+		\item Polling-basierter Nachlade-Mechanismus für neue Einträge in nahezu Echtzeit
+		\item Ringpuffer im Receiver-Dezibot verhindert unkontrolliertes Speicherwachstum
+		\item Ermöglicht wichtigen Debugging Einstieg
+	\end{itemize}
+\end{frame}
+
+\subsection{Bidirektionale Kommunikation}
+\begin{frame}{Kommunikationsprotokolle}
+	\begin{itemize}
+		\item ESP-NOW und BLE GATT implementiert
+		\item Transport-Adapter Pattern Prozess und Kommunikationslogik getrennt
+		\item  -> Flexibilität um verschieden Usecases abzudecken, erweiterbar
+		\item ESP-Now: 200-500m Range, bis zu 1 MBPS
+		\item BLE: 10-50m Range,  bis zu 2 MBPS
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{ESP-NOW: Telemetrie und Kommandos}
+	\begin{itemize}
+		\item Sender broadcastet \texttt{SensorMessage} im Sekundentakt, Empfänger sammelt zentral
+		\item Kommandos gehen vom Dezibot-Receiver an einen spezifischen Dezibot-Sender, z.B. Locate Dezibot
+		\item \texttt{Magic Numbers} trennen Sensor- und Kommando-Pakete robust
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Bluetooth (BLE GATT)}
+	\begin{itemize}
+		\item Sender als GATT-Server, Empfänger als GATT-Client
+		\item Sensordaten kommen per Notification, Kommandos per Write
+		\item Ermöglicht gemischte Setups mit ESP-NOW und BLE innerhalb derselben Plattform
+	\end{itemize}
+\end{frame}
+
+\subsection{Web-Technologien Build Chain auf Dezibot}
+\begin{frame}{Web-Server}
+	\begin{itemize}
+		\item UI basiert auf SolidJS/Vite als Single-Page-Application
+		\item Monitoring nutzerfreundlicher gestalten
+		\item Bundle Größe wurde deutlich reduziert (530kb -> 135kb)
+		\item Export-Funktionalität
+	\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}{Demo}
+\end{frame}
+
+
+
+\section{Ausblick}
+
+\begin{frame}{Roadmap}
+	\begin{itemize}
+		\item Sensor-Export als CSV/JSON für Analyse in Python oder Tabellenkalkulation
+		\item Device Naming für besser lesbare Bot-Identifikation anstatt reiner MAC-Adressen
+		\item Erweiterte Remote-Commands für Motoren, LEDs und gruppierte Aktionen
+		\item Alerting bei Schwellwerten, z. B. Heap, Temperatur oder Verbindungsverlust
+		\item Funktionen wie OTA-Update, Fernsteuerung, RSSI-basierte Entfernungsschätzung oder Ladestandanzeige des Dezibots
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Fazit}
+	\begin{itemize}
+		\item Aus einem Einzelbot-Debugging wurde eine zentrale Schwarmüberwachung entwickelt
+		\item Architektur ist so aufgebaut, dass weitere Protokolle und Features anschlussfähig sind
+		\item Mehrwert unserer Erweiterung ist unter anderem das Live-Monitoring anderer Bots, Daten- und Kommandokommunikation sowie Protokollauswahl
+		\item Größere Schwärme überwachbar durch speichereffiziente UI und konsequentes Speichermanagment
+	\end{itemize}
+	\vspace{0.8em}
+	\centering
+	\Large Fragen?
+\end{frame}
+
+\begin{frame}{Quellen und Referenzen}
+	\small
+	\begin{itemize}
+		\item Projekt-Repository und README: \url{https://github.com/niclas-j/dezibot-swarm-logging}
+		\item Dezibot Logging Vorgangerprojekt: \url{https://github.com/Tim-Dietrich/dezibot-logging}
+		\item Dezibot4 Bibliothek: \url{https://github.com/dezibot/dezibot}
+		\item ESP-NOW Dokumentation (Espressif): \url{https://docs.espressif.com/}
+	\end{itemize}
+\end{frame}
+
+\end{document}

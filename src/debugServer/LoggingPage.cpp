@@ -15,61 +15,50 @@
 #include "Utility.h"
 
 LoggingPage::LoggingPage(WebServer* server): serverPointer(server) {
-    // Endpoint for receiving JSON representation of all logs
     serverPointer->on("/logging/getLogs", [this]() {
         sendLogs();
     });
 
-    // Endpoint for receiving JSON representation of new logs
     serverPointer->on("/logging/getNewLogs", [this]() {
         sendNewLogs();
     });
 }
 
-// send the html content of the LoggingPage
-
 void LoggingPage::handler() {
-    serveFileFromSpiffs(serverPointer, "/loggingPage.html", "text/html");
+    serveFileFromSpiffs(serverPointer, "/index.html", "text/html");
 }
 
-void LoggingPage::cssHandler() {
-    serveFileFromSpiffs(serverPointer, "/css/loggingPageStyle.css", "text/css");
-}
-
-void LoggingPage::jsHandler() {
-    serveFileFromSpiffs(serverPointer, "/js/loggingPageScript.js", "text/javascript");
-}
-
-// gets logs from logger, filters them by log level and sends them as JSON
 void LoggingPage::sendLogs() const {
     String logLevel = serverPointer->arg("level");
+    String macFilter = serverPointer->arg("mac");
     auto& logs = LogDatabase::getInstance().getLogs();
-    processLogs(logs, logLevel);
+    processLogs(logs, logLevel, macFilter);
 }
 
-// gets new logs from logger, filters them by log level and sends them as JSON
 void LoggingPage::sendNewLogs() const {
     String logLevel = serverPointer->arg("level");
+    String macFilter = serverPointer->arg("mac");
     auto logs = LogDatabase::getInstance().getNewLogs();
-    processLogs(logs, logLevel);
+    processLogs(logs, logLevel, macFilter);
 }
 
-// processes logs and sends them as JSON, helper function for sendLogs and sendNewLogs
-void LoggingPage::processLogs(const std::vector<LogEntry::Entry>& logs, const String& logLevel) const {
+void LoggingPage::processLogs(const std::vector<LogEntry::Entry>& logs, const String& logLevel, const String& macFilter) const {
     JsonDocument jsonDocument;
     JsonArray logsJson = jsonDocument.to<JsonArray>();
 
-    // iterate over logs and add them to the JSON document, filtering by log level
     for (const auto& log : logs) {
-        if (logLevel == "ALL" || logLevel == Utility::logLevelToString(log.level)) {
+        const bool matchesLevel = logLevel == "ALL" || logLevel == Utility::logLevelToString(log.level);
+        const bool matchesMac = macFilter.length() == 0 || macFilter == String(log.sourceMac.c_str());
+
+        if (matchesLevel && matchesMac) {
             JsonObject logJson = logsJson.add<JsonObject>();
             logJson["level"] = Utility::logLevelToString(log.level);
             logJson["timestamp"] = log.timestamp;
             logJson["message"] = log.message;
+            logJson["mac"] = log.sourceMac;
         }
     }
 
-    // send the JSON response
     String jsonResponse;
     serializeJson(jsonDocument, jsonResponse);
     serverPointer->send(200, "application/json", jsonResponse);
