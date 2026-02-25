@@ -31,7 +31,7 @@ Das Vorgängerprojekt [Dezibot Logging](https://github.com/Tim-Dietrich/dezibot-
 
 - **Nur ein einzelner Bot**: Der Debug Server zeigt ausschließlich die Sensordaten des eigenen Dezibots an
 - **Kein Remote-Monitoring**: Um Sensordaten eines zweiten Bots zu sehen, muss man sich physisch mit dessen WiFi verbinden und er muss auch einen eigenen DebugServer auf dem Gerät hosten.
-- **Keine Kommunikation**: Kein Mechanismus um Befehle an andere Bots zu senden oder Daten von mehreren Bots zentral zu sammeln
+- **Keine Kommunikation**: Kein Mechanismus, um Befehle an andere Bots zu senden oder Daten von mehreren Bots zentral zu sammeln
 
 ---
 
@@ -346,7 +346,9 @@ Aktuell implementierte Befehle:
 
 | Befehl | Wert | Aktion auf dem Sender |
 |--------|------|----------------------|
-| `CMD_LOCATE` | `0x01` | LEDs blinken 5× grün (500ms Intervall) |
+| `CMD_LOCATE`  | `0x01` | LEDs blinken 5× grün |
+| `CMD_FORWARD` | `0x02` | Bewegung nach vorne bis stop Befehl kommt  |
+| `CMD_STOP`    | `0x03` | Stoppe Bewegung |
 
 ### Magic Numbers
 
@@ -354,6 +356,7 @@ Die Magic Numbers (`0xDE21` für Sensor, `0xDE22` für Kommandos) dienen als Pro
 - Verschiedene Nachrichtentypen (Sensor vs. Kommando)
 - Eigene Nachrichten von fremden ESP-NOW-Paketen auf dem gleichen Kanal
 - Beschädigte oder unvollständige Pakete
+- Der Variablenname xy_Magic ist dabei eine Konvention
 
 ---
 
@@ -401,8 +404,7 @@ dezibot-swarm-logging/
 │   ├── colorDetection/         # VEML6040 Farbsensor
 │   ├── lightDetection/         # IR + Daylight Sensoren
 │   ├── infraredLight/          # IR LED Steuerung
-│   ├── display/                # OLED Display
-│   └── communication/          # painlessMesh (nicht aktiv genutzt)
+│   └── display/                # OLED Display
 │
 ├── web/                        # Frontend (SolidJS SPA)
 │   ├── package.json            # NPM Abhängigkeiten
@@ -444,7 +446,7 @@ dezibot-swarm-logging/
 
 | Tool | Version | Zweck |
 |------|---------|-------|
-| [PlatformIO](https://platformio.org/) | CLI oder VS Code Extension | Firmware kompilieren & flashen |
+| [PlatformIO](https://platformio.org/) | VS Code Extension | Firmware kompilieren & flashen |
 | [Node.js](https://nodejs.org/) | ≥ 18 | Frontend Build-Toolchain |
 | npm | (mit Node.js) | Paketmanager für Frontend-Dependencies |
 | Web Packages | package.json | Alle verwendeteten Frontend-Abhängigkeiten sind Open-Source und finden sich unter `/web/package.json`.
@@ -483,11 +485,11 @@ pio run -e esp32s3_receiver -t uploadfs
 pio run -e esp32s3_receiver -t upload
 ```
 
-Der Empfänger startet einen WiFi Access Point. Die SSID und IP-Adresse werden über die serielle Konsole ausgegeben (Standard: `192.168.1.1`).
+Der Empfänger startet einen WiFi Access Point für den Debug Server. Die SSID und IP-Adresse werden über die serielle Konsole ausgegeben (Standard: `192.168.1.1`).
 
 ### 4. Sender flashen
 
-Vor dem Flashen kann das Transportprotokoll in `src/main_sender.cpp` gewählt werden:
+Vor dem Flashen kann das Transportprotokoll in `src/main_sender.cpp` gewählt werden. Aktuell nur im Code gehardcoded:
 
 ```cpp
 #define TRANSPORT_PROTOCOL "esp_now"   // Standard: ESP-NOW Broadcast
@@ -508,7 +510,7 @@ pio run -e esp32_sender -t upload
 
 ### 5. Dashboard öffnen
 
-1. Mit dem WiFi des Empfänger-Dezibots verbinden
+1. Mit dem Wifi aka  Debug-Server des Empfänger-Dezibots verbinden
 2. Browser öffnen: `http://192.168.1.1`
 3. Unter "Swarm" erscheinen die Sender-Dezibots sobald sie Daten senden
 
@@ -570,7 +572,7 @@ Das Frontend ist eine Single-Page Application die über SPIFFS vom Empfänger-De
 
 ### Startseite (`/`)
 
-Willkommensseite mit Links zu den anderen Bereichen.
+Startseite mit Links zu den anderen Bereichen.
 
 ### Swarm (`/swarm`)
 
@@ -584,7 +586,7 @@ Willkommensseite mit Links zu den anderen Bereichen.
 | Uptime | Betriebszeit des Senders |
 | Last Seen | Zeitstempel der letzten Nachricht |
 | Power | Geschätzte Leistungsaufnahme in mW / W |
-| Actions | "Locate" Button — lässt den Bot mit LEDs blinken |
+| Actions | "Locate" — lässt den Bot mit LEDs blinken / "Forward" - bewegt sich nach vorne bis "Stop" Befehl / "Stop" - Stoppe Bewegung |
 
 Klick auf eine Zeile öffnet die Live-Daten des jeweiligen Bots.
 
@@ -608,11 +610,11 @@ Aktivierung und Deaktivierung einzelner Sensorfunktionen auf dem lokalen Empfän
 
 ### BLE Verbindungslimit
 
-Der ESP32-S3 unterstützt ca. 7–9 gleichzeitige BLE-Verbindungen (konfigurationsabhängig). Für große Schwärme müsste ein BLE Mesh aufgebaut werden, dies ist nicht implementiert. ESP-NOW hat diese Einschränkung nicht (Broadcast-basiert). In gemischten Setups empfiehlt es sich mit dem aktuellen ProjektstandESP-NOW für die Mehrzahl der Sender und BLE nur für einzelne Test-Dezibots.
+Der ESP32-S3 unterstützt ca. 7–9 gleichzeitige BLE-Verbindungen (konfigurationsabhängig). Für große Schwärme müsste ein BLE Mesh aufgebaut werden, dies ist nicht implementiert. ESP-NOW hat diese Einschränkung nicht (Broadcast-basiert), solange das Adressmanagment korrekt verwaltet wird. In gemischten Setups empfiehlt es sich mit dem aktuellen Projektstand ESP-NOW für die Mehrzahl der Sender und BLE nur für einzelne Test-Dezibots.
 
 ### BLE Verbindungsaufbau
 
-Der BLE-Empfänger scannt alle 10 Sekunden nach neuen Dezibots. Zwischen dem Einschalten eines BLE-Senders und dem Erscheinen im Dashboard können bis zu ~15 Sekunden vergehen (Scan-Intervall + Verbindungsaufbau + Service Discovery). ESP-NOW-Sender erscheinen sofort nach dem ersten Broadcast.
+Der BLE-Empfänger scannt alle 10 Sekunden nach neuen Dezibots. Zwischen dem Einschalten eines BLE-Senders und dem Erscheinen im Dashboard können bis zu ~15 Sekunden vergehen (Scan-Intervall + Verbindungsaufbau + Service Discovery). ESP-NOW-Sender erscheinen beinahe direkt nach dem ersten Broadcast.
 
 ### Übertragungs-Kanal
 
@@ -620,7 +622,7 @@ Sender und Empfänger müssen auf dem gleichen Übertragungs-Kanal arbeiten. Der
 
 ### Locate-Befehl blockiert
 
-`multiColorLight.blink()` blockiert den aufrufenden Thread für ~5 Sekunden. Auf dem Sender läuft der Kommando-Handler im WiFi-Task-Kontext, d.h. während des Blinkens werden keine ESP-NOW Pakete empfangen. Der Telemetrie-Task auf Core 0 läuft jedoch weiter.
+`multiColorLight.blink()` läuft unabhängig von Hauptthread sowie vom Telemetrie-Task.
 
 ### Power-Estimation Genauigkeit
 
