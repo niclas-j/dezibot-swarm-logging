@@ -1,10 +1,10 @@
 /**
  * @file PageProvider.h
- * @author Tim Dietrich, Felix Herrling
+ * @author Tim Dietrich, Felix Herrling, Niclas Jost, Marius Busalt
  * @brief This component implements an abstract class as foundation for the different pages of the webserver.
- * Each page has to implement the handler method to provide the html content.
- * @version 1.0
- * @date 2025-03-23
+ *        Each page has to implement the handler method to provide the html content.
+ * @version 2.0
+ * @date 2026-02
  *
  * @copyright Copyright (c) 2025
  *
