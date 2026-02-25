@@ -1,4 +1,4 @@
-%!TeX engine = xelatex
+% !TeX program = xelatex
 \def\BeamerAspectRatio{43}
 
 \documentclass[aspectratio=\BeamerAspectRatio]{beamer}
@@ -17,16 +17,21 @@
 \maketitlepage
 \maketableofcontents
 
+% 1-5 Marius
+% 6-10 Niclas
+% 11,12,13,14 Marius
+% 15 - Rest
+
 \section{Motivation}
 
 \subsection{Stand Vorgängerprojekt}
+% 
 \begin{frame}{Ausgangslage vor diesem Projekt}
 	\begin{itemize}
-		 \item Debug-Server zeigte nur die Sensordaten des Webserver-Host Dezibots
-   		 \item Websiten mit akutellen Sensordaten und Logs
-   		 \item Fokus lag auf lokaler Diagnose eines einzelnen Dezibots statt auf koordinierter Schwarmüberwachung
-		 \item Keine Kommunikation zu anderen Dezibots implementiert
-		 \item Hauptloop blockierte Sensordatenabfrage und führte zu Datenverlust
+		\item Debug-Server zeigte nur die Sensordaten des Webserver-Host Dezibots
+		\item Es gab nur Diagnose eines einzelnen Dezibots
+		\item Keine Kommunikation zu anderen Dezibots implementiert
+		\item Großes Webbundle
 	\end{itemize}
 \end{frame}
 
@@ -36,7 +41,7 @@
 		\item Überwachung einer Dezibotgruppe bzw. Schwarm
 		\item Schnelle Übersicht über Schwarm: Wer ist online, wer sendet, Logs einsehen
 		\item Fokus auf Diagnostik, ausgelesene Sensordaten einsehbar und spezifische Logs verfügbar machen
-		\item Identifizierung von Dezibots ermöglichen, um Daten leichter zuordnen zu können		
+		\item Identifizierung von Dezibots ermöglichen, um Daten leichter zuordnen zu können
 	\end{itemize}
 \end{frame}
 
@@ -46,14 +51,14 @@
 		\item Zentrale Schwarm-Übersicht aller verbundenen Dezibots über Masterdezibot
 		\item Telemetrie und Logs einzelner Dezibots verfügbar machen
 		\item Bidirektionale Kommunikation: Masterdezibot soll Telemetrie empfangen und Kommandos zurücksenden
-		\item Zwei Kommunikationsprotokolle für verschiedene Usecases: ESP-NOW und Bluetooth Low Energy
-		\item Stabiles Datenmanagment und Echtzeitverfügbarkeit durch entkoppeltes Telemetriemanagment
+		\item Kommunikationsprotokoll-Agnostisch
+		\item Echtzeitverfügbarkeit durch entkoppeltes Telemetriemanagment
 		\item Verbesserte UI passend zu neuen Funktionen, Speicherverbrauch reduzieren
 		\item Logging für größere Schwärme ermöglichen
 	\end{itemize}
 \end{frame}
 
-\section{Grundlegende Architektur}
+\section{Architektur}
 
 \subsection{Plantuml Grobarchitektur}
 \begin{frame}{PlantUML Grobarchitektur (Systemkontext)}
@@ -67,20 +72,12 @@
 	\includegraphics[width=\textwidth,height=0.75\textheight,keepaspectratio]{imglib/diagrams/klassendiagramm.png}
 \end{frame}
 
-\subsection{Dev Experience mit Platform IO}
-\begin{frame}{Dev Experience mit PlatformIO}
-	\begin{itemize}
-		\item TODO rausnehmen?!
-		\item Einheitliche Build-Umgebung für Sender und Empfanger,  gesamte Config in platform.ini einsehbar
-		\item Reproduzierbarer Ablauf: \texttt{pio run}, \texttt{upload}, \texttt{uploadfs}, \texttt{device monitor}.
-		\item Frontend-Artefakte können optional in \texttt{data/} gebaut und per SPIFFS hochgeladen werden.
-		\item Kernnutzen bleibt die schnelle Iteration an Firmware und Kommunikationslogik.
-	\end{itemize}
-\end{frame}
 
 \begin{frame}[fragile]{Build- und Flash-Workflow}
-	\small
-	\item TODO rausnehmen?
+	\begin{itemize}
+		\item Einheitliche Build-Umgebung für Sender und Empfanger,  gesamte Config in platform.ini einsehbar
+		\item Frontend-Artefakte können optional in \texttt{data/} gebaut und per SPIFFS hochgeladen werden.
+	\end{itemize}
 	\begin{verbatim}
 
 cd web
@@ -91,9 +88,7 @@ pio run -e esp32s3_receiver -t uploadfs
 pio run -e esp32s3_receiver -t upload
 pio run -e esp32s3_sender -t upload
 \end{verbatim}
-	\begin{itemize}
-		\item Ein Build erzeugt sofort testbare Firmware und die passende Weboberflache.
-	\end{itemize}
+
 \end{frame}
 
 \section{Funktionen}
@@ -101,19 +96,17 @@ pio run -e esp32s3_sender -t upload
 \subsection{Übersicht verbundener Dezibots}
 \begin{frame}{Schwarm-Übersicht im Dashboard}
 	\begin{itemize}
-		\item TODO überarbeiten
 		\item Je Bot sichtbar: Online/Offline, MAC, Message Counter, Uptime, Last Seen
 		\item Klick auf einen Bot führt direkt in die Live-Sensoransicht für diesen Dezibot
-		\item Locate-Button lässt Dezibot blinken und macht diesen sofort identifzierbar
+		\item Senden von Commands durch verschiedene Buttons
 	\end{itemize}
 \end{frame}
 
 \begin{frame}{Charts mit Live-Sensordaten}
 	\begin{itemize}
-		\item Pro Sensorwert ein eigenes Echtzeit-Diagram 
+		\item Pro Sensorwert ein eigenes Echtzeit-Diagram
 		\item Anzeige umfasst Sensordaten und Systemmetriken wie Heapinfo oder Chip-Temperatur
-		\item Zeitfenster ist konfigurierbar 50 bis 2000 Datenpunkte für Debugging und Demo
-		\item Fokus auf Lesbarkeit bei mehreren Bots statt auf historische Langzeitarchivierung
+		\item Anzahl der Datenpunkte ist konfigurierbar
 	\end{itemize}
 \end{frame}
 
@@ -121,7 +114,7 @@ pio run -e esp32s3_sender -t upload
 	\begin{itemize}
 		\item Eigene Logging-Seite mit Filterung nach Level (ALL, INFO, WARNING, ERROR, DEBUG, TRACE)
 		\item Polling-basierter Nachlade-Mechanismus für neue Einträge in nahezu Echtzeit
-		\item Ringpuffer im Backend verhindert unkontrolliertes Speicherwachstum
+		\item Ringpuffer im Receiver-Dezibot verhindert unkontrolliertes Speicherwachstum
 		\item Ermöglicht wichtigen Debugging Einstieg
 	\end{itemize}
 \end{frame}
@@ -129,21 +122,18 @@ pio run -e esp32s3_sender -t upload
 \subsection{Bidirektionale Kommunikation}
 \begin{frame}{Kommunikationsprotokolle}
 	\begin{itemize}
-		\item TODO kann man auf einem Dezibot BLE und auf dem anderes ESP now laufen lassen udn parallel Daten auslesen?
 		\item ESP-NOW und BLE GATT implementiert
 		\item Transport-Adapter Pattern Prozess und Kommunikationslogik getrennt
-		\item  -> Flexibilität um verschieden Usecases abzudecken
-		\item ESP-Now: 200-500m Range, bis zu 1 MBPS 
+		\item  -> Flexibilität um verschieden Usecases abzudecken, erweiterbar
+		\item ESP-Now: 200-500m Range, bis zu 1 MBPS
 		\item BLE: 10-50m Range,  bis zu 2 MBPS
-		\item Beide Prtokolle können theoretisch unendlich viele Dezibots verbinden
 	\end{itemize}
 \end{frame}
 
 \begin{frame}{ESP-NOW: Telemetrie und Kommandos}
 	\begin{itemize}
-		\item TODO Magic Numbers durch Wert ersetzen
 		\item Sender broadcastet \texttt{SensorMessage} im Sekundentakt, Empfänger sammelt zentral
-		\item Kommandos gehen als Unicast zurück an ein konkretes Gerät, z.B. Locate Dezibot
+		\item Kommandos gehen vom Dezibot-Receiver an einen spezifischen Dezibot-Sender, z.B. Locate Dezibot
 		\item \texttt{Magic Numbers} trennen Sensor- und Kommando-Pakete robust
 	\end{itemize}
 \end{frame}
@@ -157,36 +147,21 @@ pio run -e esp32s3_sender -t upload
 \end{frame}
 
 \subsection{Web-Technologien Build Chain auf Dezibot}
-\begin{frame}{Web-Build-Chain (Randaspekt)}
+\begin{frame}{Web-Server}
 	\begin{itemize}
-		\item TODO stimmt die KB aussage?
-		\item UI basiert auf SolidJS/Vite und liegt nur auf Serverseite
+		\item UI basiert auf SolidJS/Vite als Single-Page-Application
 		\item Monitoring nutzerfreundlicher gestalten
-		\item Nebeneffekt: JavaScript-Bundle sank von 507 KB auf ca. 376 KB.
+		\item Bundle Größe wurde deutlich reduziert (530kb -> 135kb)
+		\item Export-Funktionalität
 	\end{itemize}
 \end{frame}
 
-\section{Probleme}
 
-\begin{frame}{Technische Herausforderungen im Betrieb}
-	\begin{itemize}
-		\item TODO Würde ich löschen
-		\item BLE-Skalierung: gleichzeitige Verbindungen auf ESP32-S3 sind begrenzt.
-		\item BLE-Onboarding: Scan- und Verbindungsaufbau verursachen spurbare Verzogerung.
-		\item Kanalabhangigkeit bei ESP-NOW: Sender und Empfanger mussen denselben Kanal nutzen.
-		\item Blockierender Locate-Handler kann den Empfangspfad für einige Sekunden storen.
-	\end{itemize}
+
+\begin{frame}{Demo}
 \end{frame}
 
-\begin{frame}{Qualitat und Grenzen der Messwerte}
-	\begin{itemize}
-		\item TODO Würde ich löschen
-		\item Power-Wert ist bewusst eine Schatzung und keine elektrische Messung.
-		\item Chip-Temperatur ist intern und nur begrenzt als Umgebungsindikator nutzbar.
-		\item Thread-Safety in Teilen des Logging-Zugriffs ist als Verbesserungsaufgabe dokumentiert.
-		\item Diese Punkte sind dokumentiert und priorisiert für die nachsten Iterationen.
-	\end{itemize}
-\end{frame}
+
 
 \section{Ausblick}
 
@@ -215,11 +190,10 @@ pio run -e esp32s3_sender -t upload
 \begin{frame}{Quellen und Referenzen}
 	\small
 	\begin{itemize}
-		\item Projekt-Repository und README: \url{https://github.com/dezibot/dezibot-Schwarm-logging}
+		\item Projekt-Repository und README: \url{https://github.com/niclas-j/dezibot-swarm-logging}
 		\item Dezibot Logging Vorgangerprojekt: \url{https://github.com/Tim-Dietrich/dezibot-logging}
 		\item Dezibot4 Bibliothek: \url{https://github.com/dezibot/dezibot}
 		\item ESP-NOW Dokumentation (Espressif): \url{https://docs.espressif.com/}
-		\item TODO anhängen PlatformIO, SolidJS, Vite, Chart.js Projektdokumentationen
 	\end{itemize}
 \end{frame}
 
